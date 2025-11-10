@@ -1,0 +1,22 @@
+{
+  "name": "bioepic-skills",
+  "owner": {
+    "name": "Harry Caufield",
+    "email": "jhc@lbl.gov"
+  },
+  "metadata": {
+    "description": "Skills for grounding environmental and biological research terms to ontologies",
+    "version": "0.0.1"
+  },
+  "plugins": [
+    {
+      "name": "ontology-grounding",
+      "description": "Skills for grounding variable names to ontologies (BERVO, ENVO, ChEBI, etc.)",
+      "source": "./..",
+      "strict": false,
+      "skills": [
+        "./skills/ontology-grounding"
+      ]
+    }
+  ]
+}
