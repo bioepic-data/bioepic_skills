@@ -2,185 +2,208 @@
 
 This guide covers common usage patterns and best practices for BioEPIC Skills.
 
-## API Client Initialization
+## Overview
 
-### Basic Initialization
+BioEPIC Skills provides two main capabilities:
+
+1. **Ontology Grounding** - Map terms to formal ontology concepts
+2. **ESS-DIVE Data Extraction** - Extract and process variables from datasets
+
+## Ontology Grounding
+
+### Search for Terms
 
 ```python
-from bioepic_skills.api_search import APISearch
+from bioepic_skills.ontology_grounding import search_ontology
 
-# Initialize with a collection name
-api_client = APISearch(collection_name="samples")
+# Search BERVO for environmental terms
+results = search_ontology("soil moisture", ontology_id="bervo", limit=10)
+
+for term_id, ont_id, label in results:
+    print(f"{term_id}: {label}")
 ```
 
-### Environment Configuration
-
-You can specify different environments (production or development):
+### Get Term Details
 
 ```python
-# Use production environment (default)
-api_client = APISearch(collection_name="samples", env="prod")
+from bioepic_skills.ontology_grounding import get_term_details
 
-# Use development environment
-api_client = APISearch(collection_name="samples", env="dev")
+# Get comprehensive information about a term
+details = get_term_details("ENVO:00000001", ontology_id="envo")
+
+print(f"Label: {details['label']}")
+print(f"Definition: {details['definition']}")
+print(f"Synonyms: {details['synonyms']}")
+
+# Access relationships
+if details['relationships']:
+    for rel_type, fillers in details['relationships'].items():
+        print(f"\n{rel_type}:")
+        for filler in fillers:
+            print(f"  - {filler['label']} ({filler['id']})")
 ```
 
-## Querying Data
-
-### Get Records
-
-Retrieve records from a collection:
+### Ground Multiple Terms
 
 ```python
-# Get first 100 records
-records = api_client.get_records(max_page_size=100)
+from bioepic_skills.ontology_grounding import ground_terms
 
-# Get all records (with pagination)
-all_records = api_client.get_records(max_page_size=100, all_pages=True)
+# Ground research variables to BERVO
+terms = [
+    "air temperature",
+    "soil moisture",
+    "precipitation",
+    "pH",
+    "salinity"
+]
 
-# Get specific fields only
-records = api_client.get_records(
-    max_page_size=50,
-    fields="id,name,description"
-)
-```
-
-### Filter Records
-
-Use MongoDB-style filters:
-
-```python
-# Simple filter
-filter_str = '{"type": "sample"}'
-records = api_client.get_record_by_filter(filter_str)
-
-# Complex filter with multiple conditions
-filter_str = '{"type": "sample", "status": "active"}'
-records = api_client.get_record_by_filter(
-    filter=filter_str,
-    max_page_size=50,
-    all_pages=True
-)
-```
-
-### Search by Attribute
-
-Search for records matching specific attributes:
-
-```python
-# Partial match (default)
-results = api_client.get_record_by_attribute(
-    attribute_name="name",
-    attribute_value="test",
-    exact_match=False
+results = ground_terms(
+    terms,
+    ontology_id="bervo",
+    threshold=0.7,
+    limit_per_term=3
 )
 
-# Exact match
-results = api_client.get_record_by_attribute(
-    attribute_name="id",
-    attribute_value="sample-12345",
-    exact_match=True
-)
+# Process results
+for term, matches in results.items():
+    print(f"\n{term}:")
+    if matches:
+        for match in matches:
+            print(f"  {match['term_id']}: {match['label']}")
+            print(f"    Confidence: {match['confidence']:.2f}")
+    else:
+        print("  No matches found")
 ```
 
-### Get Single Record
-
-Retrieve a specific record by ID:
+### List Available Ontologies
 
 ```python
-record = api_client.get_record_by_id("sample-12345")
-print(f"Record name: {record['name']}")
+from bioepic_skills.ontology_grounding import list_ontologies
+
+ontologies = list_ontologies()
+
+for ont in ontologies:
+    print(f"{ont['id']}: {ont['name']}")
+    print(f"  {ont['description']}")
 ```
 
-## Working with Results
+## ESS-DIVE Data Extraction
 
-### Convert to DataFrame
-
-```python
-from bioepic_skills.data_processing import DataProcessing
-
-dp = DataProcessing()
-
-# Convert list of dicts to pandas DataFrame
-df = dp.convert_to_df(records)
-
-# View first few rows
-print(df.head())
-
-# Get summary statistics
-print(df.describe())
-```
-
-### Extract Specific Fields
+### Retrieve Dataset Metadata
 
 ```python
-# Extract a single field from all records
-ids = dp.extract_field(records, "id")
-names = dp.extract_field(records, "name")
+import os
+from bioepic_skills.trowel_wrapper import get_essdive_metadata
 
-print(f"Found {len(ids)} IDs")
-```
+# Set authentication token
+os.environ["ESSDIVE_TOKEN"] = "your-token-here"
 
-### Process Large Datasets
-
-```python
-# Split large lists into manageable chunks
-large_id_list = [...]  # Your list of IDs
-chunks = dp.split_list(large_id_list, chunk_size=100)
-
-# Process each chunk
-for i, chunk in enumerate(chunks):
-    print(f"Processing chunk {i+1}/{len(chunks)}")
-    # Process chunk...
-```
-
-## Building Filters
-
-### Simple Filters
-
-```python
-# Build a regex-based filter
-filter_dict = dp.build_filter(
-    {"name": "sample", "type": "biological"},
-    exact_match=False
+# Retrieve metadata for datasets
+output_files = get_essdive_metadata(
+    doi_file="dois.txt",
+    output_dir="./data"
 )
 
-results = api_client.get_record_by_filter(filter_dict)
+print(f"Results: {output_files['results']}")
+print(f"Frequencies: {output_files['frequencies']}")
+print(f"Filetable: {output_files['filetable']}")
 ```
 
-### Exact Match Filters
+### Extract Variables from Data Files
 
 ```python
-# Build an exact match filter
-filter_dict = dp.build_filter(
-    {"id": "sample-12345", "status": "active"},
-    exact_match=True
+from bioepic_skills.trowel_wrapper import get_essdive_variables
+
+# Extract variable names from all data files
+variables_file = get_essdive_variables(
+    filetable_path="./data/filetable.tsv",
+    output_dir="./data",
+    workers=20  # Number of parallel workers
 )
+
+print(f"Variables extracted to: {variables_file}")
+
+# Read the results
+import pandas as pd
+df = pd.read_csv(variables_file, sep='\t')
+print(f"Found {len(df)} unique variables")
+print(f"\nMost common variables:")
+print(df.sort_values('frequency', ascending=False).head(10))
 ```
 
-## Data Transformation
-
-### Merge DataFrames
+### Match Terms Against Reference Lists
 
 ```python
-# Simple merge on a common column
-merged_df = dp.merge_dataframes("id", df1, df2)
+from bioepic_skills.trowel_wrapper import match_term_lists
 
-# Advanced merge with different keys
-merged_df = dp.merge_df(
-    df1=samples_df,
-    df2=metadata_df,
-    key1="sample_id",
-    key2="id"
+# Match extracted variables against BERVO terms
+matched_file = match_term_lists(
+    terms_file="./data/variable_names.tsv",
+    list_file="bervo_terms.txt",
+    output="./data/matched_bervo.tsv",
+    fuzzy=True,
+    similarity_threshold=85.0
 )
+
+print(f"Matched results: {matched_file}")
+
+# Analyze matches
+df_matched = pd.read_csv(matched_file, sep='\t')
+exact_matches = len(df_matched[df_matched['match_type'] == 'exact_match'])
+fuzzy_matches = len(df_matched[df_matched['match_type'] == 'fuzzy_match'])
+no_matches = len(df_matched[df_matched['match_type'] == 'no_match'])
+
+print(f"\nMatching statistics:")
+print(f"  Exact matches: {exact_matches}")
+print(f"  Fuzzy matches: {fuzzy_matches}")
+print(f"  No matches: {no_matches}")
 ```
 
-### Rename Columns
+## Combined Workflows
+
+### Ground ESS-DIVE Variables to Ontologies
 
 ```python
-# Rename all columns
-new_names = ["ID", "Name", "Description"]
-df_renamed = dp.rename_columns(df, new_names)
+import os
+import pandas as pd
+from bioepic_skills.trowel_wrapper import get_essdive_metadata, get_essdive_variables
+from bioepic_skills.ontology_grounding import search_ontology, ground_terms
+
+# Set up
+os.environ["ESSDIVE_TOKEN"] = "your-token-here"
+
+# Step 1: Get ESS-DIVE data
+print("Retrieving metadata...")
+metadata = get_essdive_metadata("dois.txt", "./workflow")
+
+print("Extracting variables...")
+variables_file = get_essdive_variables(output_dir="./workflow", workers=20)
+
+# Step 2: Load variables
+df = pd.read_csv(variables_file, sep='\t')
+variable_list = df['name'].tolist()[:50]  # First 50 as example
+
+# Step 3: Ground to BERVO
+print("Grounding to BERVO...")
+grounded = ground_terms(
+    variable_list,
+    ontology_id="bervo",
+    threshold=0.7,
+    limit_per_term=3
+)
+
+# Step 4: Analyze results
+matched = sum(1 for v, matches in grounded.items() if matches)
+print(f"\nResults: {matched}/{len(variable_list)} variables matched to BERVO")
+
+# Show some examples
+for var, matches in list(grounded.items())[:5]:
+    print(f"\n'{var}':")
+    if matches:
+        for match in matches[:2]:
+            print(f"  → {match['label']} ({match['confidence']:.2f})")
+    else:
+        print("  No matches")
 ```
 
 ## Error Handling
@@ -188,29 +211,92 @@ df_renamed = dp.rename_columns(df, new_names)
 Always include proper error handling:
 
 ```python
+from bioepic_skills.ontology_grounding import search_ontology
+from bioepic_skills.trowel_wrapper import get_essdive_metadata
+
+# Handle ontology errors
 try:
-    records = api_client.get_records(max_page_size=100)
-    df = dp.convert_to_df(records)
-except RuntimeError as e:
-    print(f"API request failed: {e}")
+    results = search_ontology("soil moisture", ontology_id="bervo")
 except Exception as e:
-    print(f"Unexpected error: {e}")
+    print(f"Ontology search failed: {e}")
+
+# Handle ESS-DIVE errors
+try:
+    metadata = get_essdive_metadata("dois.txt", "./output")
+except FileNotFoundError as e:
+    print(f"File not found: {e}")
+except RuntimeError as e:
+    print(f"ESS-DIVE API error: {e}")
+    # Check if token is set
+    if not os.getenv("ESSDIVE_TOKEN"):
+        print("Remember to set ESSDIVE_TOKEN environment variable")
+```
+
+## Best Practices
+
+### 1. Use Environment Variables for Tokens
+
+```python
+import os
+
+# Set token from environment
+token = os.getenv("ESSDIVE_TOKEN")
+if not token:
+    raise ValueError("ESSDIVE_TOKEN not set")
+```
+
+### 2. Process Data in Batches
+
+```python
+# For large lists of terms
+batch_size = 50
+for i in range(0, len(all_terms), batch_size):
+    batch = all_terms[i:i+batch_size]
+    results = ground_terms(batch, ontology_id="bervo")
+    # Process results...
+```
+
+### 3. Cache Ontology Results
+
+```python
+import json
+from pathlib import Path
+
+cache_file = Path("bervo_cache.json")
+
+# Load from cache if available
+if cache_file.exists():
+    with open(cache_file) as f:
+        bervo_terms = json.load(f)
+else:
+    # Query and cache
+    results = search_ontology("", ontology_id="bervo", limit=10000)
+    bervo_terms = [{"id": tid, "label": label} for tid, _, label in results]
+    with open(cache_file, 'w') as f:
+        json.dump(bervo_terms, f)
+```
+
+### 4. Use Parallel Processing for Large Datasets
+
+```python
+# Use more workers for large ESS-DIVE datasets
+variables_file = get_essdive_variables(
+    output_dir="./data",
+    workers=30  # Increase for better performance
+)
 ```
 
 ## Logging and Debugging
 
-### Enable Debug Logging
+### Enable Verbose Output
 
-```python
+```bash
+# CLI with verbose mode
+bioepic search "soil moisture" -vv
+
+# Or in Python
 import logging
-
-# Set logging level
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-
-# Now your API calls will show detailed debug information
+logging.basicConfig(level=logging.DEBUG)
 ```
 
 ### Custom Logger
@@ -221,112 +307,19 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 # Use in your code
-logger.info("Starting data retrieval...")
-records = api_client.get_records(max_page_size=100)
-logger.info(f"Retrieved {len(records)} records")
-```
-
-## Best Practices
-
-### 1. Use Environment Variables
-
-Always store credentials in environment variables:
-
-```python
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-client_id = os.getenv("CLIENT_ID")
-client_secret = os.getenv("CLIENT_SECRET")
-```
-
-### 2. Handle Pagination Efficiently
-
-For large datasets:
-
-```python
-# Process data in chunks instead of loading all at once
-def process_in_batches():
-    page_size = 100
-    records = api_client.get_records(max_page_size=page_size)
-    
-    while records:
-        # Process current batch
-        df = dp.convert_to_df(records)
-        # ... do something with df
-        
-        # Get next batch
-        # (Implementation depends on your API's pagination)
-        break  # Remove this and implement proper pagination
-```
-
-### 3. Validate Data
-
-Always validate your data:
-
-```python
-# Check for required fields
-required_fields = ["id", "name", "type"]
-if all(field in record for field in required_fields):
-    # Process record
-    pass
-else:
-    print("Missing required fields")
-```
-
-### 4. Cache Results
-
-For expensive queries:
-
-```python
-import pickle
-
-# Save results
-with open("cached_results.pkl", "wb") as f:
-    pickle.dump(records, f)
-
-# Load cached results
-with open("cached_results.pkl", "rb") as f:
-    records = pickle.load(f)
-```
-
-## Example Workflows
-
-### Complete Data Retrieval and Analysis
-
-```python
-from bioepic_skills.api_search import APISearch
-from bioepic_skills.data_processing import DataProcessing
-import pandas as pd
-
-# Initialize
-api_client = APISearch(collection_name="samples")
-dp = DataProcessing()
-
-# Retrieve data
-records = api_client.get_record_by_attribute(
-    attribute_name="category",
-    attribute_value="research",
-    all_pages=True
-)
-
-# Convert and process
-df = dp.convert_to_df(records)
-
-# Filter and transform
-df_filtered = df[df["status"] == "active"]
-df_filtered["date"] = pd.to_datetime(df_filtered["date"])
-
-# Export results
-df_filtered.to_csv("research_samples.csv", index=False)
-print(f"Exported {len(df_filtered)} records")
+logger.info("Starting ontology grounding...")
+results = ground_terms(terms, ontology_id="bervo")
+logger.info(f"Matched {len(results)} terms")
 ```
 
 ## Next Steps
 
-- Learn about [Authentication](authentication.md)
-- Explore [Data Processing](data-processing.md) in depth
-- Check the [API Reference](../api/api-search.md)
+- Explore complete [Workflows & Examples](workflows.md) for end-to-end workflows
+- Check the [Command-Line Interface](cli.md) documentation
+- Review [Testing](../development/testing.md) guidelines

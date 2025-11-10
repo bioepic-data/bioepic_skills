@@ -2,189 +2,168 @@
 
 This guide will help you get started with BioEPIC Skills quickly.
 
-## Setup
+## Installation
 
-### 1. Install the Package
+### Using pip
 
 ```bash
 pip install bioepic_skills
 ```
 
-### 2. Configure Environment Variables
-
-Create a `.env` file in your project directory:
+### Using uv (recommended)
 
 ```bash
-cp .env.example .env
+uv add bioepic_skills
 ```
 
-Edit `.env` with your credentials:
+### From source
 
+```bash
+git clone https://github.com/bioepic-data/bioepic_skills.git
+cd bioepic_skills
+uv sync
 ```
-ENV=prod
-CLIENT_ID=your_client_id_here
-CLIENT_SECRET=your_client_secret_here
+
+## Basic Usage - Command Line
+
+### List Available Ontologies
+
+```bash
+bioepic ontologies
 ```
 
-## Basic Usage
+### Search for Terms
 
-### Simple API Query
+```bash
+# Search BERVO for environmental variables
+bioepic search "soil moisture" --ontology bervo
+
+# Search across all ontologies
+bioepic search "temperature" --limit 10
+```
+
+### Ground Terms to Ontologies
+
+```bash
+# Ground multiple terms to BERVO
+bioepic ground "air temperature" "precipitation" "soil pH" --ontology bervo
+
+# Save results to file
+bioepic ground "temperature" "humidity" --output results.json
+```
+
+### Get Term Details
+
+```bash
+# Get detailed information about a specific term
+bioepic term ENVO:00000001
+```
+
+## ESS-DIVE Data Extraction
+
+### Set Up Authentication
+
+```bash
+export ESSDIVE_TOKEN="your-token-here"
+```
+
+Get your token from: https://docs.ess-dive.lbl.gov/programmatic-tools/ess-dive-dataset-api#get-access
+
+### Retrieve Dataset Metadata
+
+```bash
+# Create a file with DOIs (one per line)
+cat > dois.txt << 'EOF'
+doi:10.15485/1873253
+doi:10.15485/1873254
+EOF
+
+# Retrieve metadata
+bioepic essdive-metadata dois.txt --output ./data
+```
+
+### Extract Variables
+
+```bash
+# Extract variable names from data files
+bioepic essdive-variables --output ./data --workers 20
+```
+
+### Match Terms
+
+```bash
+# Match extracted variables against reference list
+bioepic match-terms variable_names.tsv bervo_terms.txt --fuzzy
+```
+
+## Python API Usage
+
+### Ontology Grounding
 
 ```python
-from bioepic_skills.api_search import APISearch
-from bioepic_skills.data_processing import DataProcessing
-
-# Create clients
-api_client = APISearch(collection_name="samples")
-dp = DataProcessing()
-
-# Get records
-records = api_client.get_records(max_page_size=10)
-print(f"Retrieved {len(records)} records")
-
-# Convert to DataFrame
-df = dp.convert_to_df(records)
-print(df.head())
-```
-
-### Search by Attribute
-
-```python
-# Search for specific records
-results = api_client.get_record_by_attribute(
-    attribute_name="type",
-    attribute_value="biological_sample",
-    max_page_size=50,
-    all_pages=True
+from bioepic_skills.ontology_grounding import (
+    search_ontology,
+    get_term_details,
+    ground_terms
 )
 
-print(f"Found {len(results)} matching records")
+# Search for terms
+results = search_ontology("soil moisture", ontology_id="bervo", limit=5)
+for term_id, ont_id, label in results:
+    print(f"{term_id}: {label}")
+
+# Get term details
+details = get_term_details("ENVO:00000001", ontology_id="envo")
+print(f"Label: {details['label']}")
+print(f"Definition: {details['definition']}")
+
+# Ground multiple terms
+terms = ["air temperature", "precipitation", "soil pH"]
+results = ground_terms(terms, ontology_id="bervo", threshold=0.8)
+for term, matches in results.items():
+    print(f"\n{term}:")
+    for match in matches:
+        print(f"  {match['term_id']}: {match['label']} ({match['confidence']:.2f})")
 ```
 
-### Get Record by ID
+### ESS-DIVE Data Extraction
 
 ```python
-# Retrieve a specific record
-record = api_client.get_record_by_id("sample-12345")
-print(record)
-```
-
-## Using Authentication
-
-For endpoints that require authentication:
-
-```python
-from bioepic_skills.auth import BioEPICAuth
-from bioepic_skills.api_search import APISearch
 import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
-# Initialize authentication
-auth = BioEPICAuth(
-    client_id=os.getenv("CLIENT_ID"),
-    client_secret=os.getenv("CLIENT_SECRET")
+from bioepic_skills.trowel_wrapper import (
+    get_essdive_metadata,
+    get_essdive_variables,
+    match_term_lists
 )
 
-# Verify credentials
-if auth.has_credentials():
-    print("Authentication configured successfully")
-    
-    # Get token
-    token = auth.get_token()
-    print("Token acquired")
-```
+# Set token
+os.environ["ESSDIVE_TOKEN"] = "your-token-here"
 
-## Data Processing Examples
+# Retrieve metadata
+metadata_files = get_essdive_metadata("dois.txt", "./output")
+print(f"Results: {metadata_files['results']}")
+print(f"Filetable: {metadata_files['filetable']}")
 
-### Extract Specific Fields
-
-```python
-from bioepic_skills.data_processing import DataProcessing
-
-dp = DataProcessing()
-
-# Extract IDs from records
-ids = dp.extract_field(records, "id")
-print(f"Extracted {len(ids)} IDs")
-```
-
-### Build Custom Filters
-
-```python
-# Build a MongoDB-style filter
-filter_query = dp.build_filter(
-    {"name": "test", "status": "active"},
-    exact_match=False
+# Extract variables
+variables_file = get_essdive_variables(
+    filetable_path=metadata_files['filetable'],
+    output_dir="./output",
+    workers=20
 )
+print(f"Variables: {variables_file}")
 
-# Use the filter in a query
-filtered_records = api_client.get_record_by_filter(filter_query)
-```
-
-### Merge DataFrames
-
-```python
-# Merge two DataFrames on a common column
-merged_df = dp.merge_dataframes("id", df1, df2)
-print(f"Merged dataframe shape: {merged_df.shape}")
-```
-
-### Split Lists into Chunks
-
-```python
-# Split a large list into smaller chunks
-large_list = list(range(250))
-chunks = dp.split_list(large_list, chunk_size=100)
-print(f"Split into {len(chunks)} chunks")
-```
-
-## Debugging
-
-Enable debug logging to see detailed information:
-
-```python
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
-
-# Now run your code - you'll see detailed debug output
-api_client = APISearch(collection_name="samples")
-records = api_client.get_records(max_page_size=5)
-```
-
-## Common Patterns
-
-### Pagination - Get All Pages
-
-```python
-# Get all pages of results
-all_records = api_client.get_records(
-    max_page_size=100,
-    all_pages=True
+# Match terms
+matched_file = match_term_lists(
+    terms_file=variables_file,
+    list_file="bervo_terms.txt",
+    fuzzy=True,
+    similarity_threshold=85.0
 )
-print(f"Retrieved {len(all_records)} total records")
-```
-
-### Filter and Export
-
-```python
-# Filter, convert to DataFrame, and export
-results = api_client.get_record_by_attribute(
-    attribute_name="category",
-    attribute_value="research"
-)
-
-df = dp.convert_to_df(results)
-df.to_csv("research_samples.csv", index=False)
-print("Data exported to research_samples.csv")
+print(f"Matched: {matched_file}")
 ```
 
 ## Next Steps
 
-- Explore the [User Guide](../user-guide/usage.md) for more detailed examples
-- Check the [API Reference](../api/api-search.md) for complete documentation
-- Learn about [Authentication](../user-guide/authentication.md) in detail
-- Review [Data Processing](../user-guide/data-processing.md) capabilities
+- Check out complete [Workflows & Examples](../user-guide/workflows.md) for end-to-end workflows
+- Explore the [Command-Line Interface](../user-guide/cli.md) documentation
+- Read the [User Guide](../user-guide/usage.md) for detailed information

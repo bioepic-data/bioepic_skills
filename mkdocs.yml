@@ -38,14 +38,7 @@ nav:
   - User Guide:
       - Usage: user-guide/usage.md
       - Command-Line Interface: user-guide/cli.md
-      - Authentication: user-guide/authentication.md
-      - Data Processing: user-guide/data-processing.md
-  - API Reference:
-      - API Base: api/api-base.md
-      - API Search: api/api-search.md
-      - Authentication: api/auth.md
-      - Data Processing: api/data-processing.md
-      - Utils: api/utils.md
+      - Workflows & Examples: user-guide/workflows.md
   - Development:
       - Contributing: development/contributing.md
       - Testing: development/testing.md
