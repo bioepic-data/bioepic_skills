@@ -1,0 +1,19 @@
+# -*- coding: utf-8 -*-
+# __init__.py
+
+# Import necessary modules or packages here
+
+# Define the package version
+__version__ = "0.1.0"
+
+# Initialize package-level variables or configurations if needed
+# config_variable = "value"
+
+# You can also include package-level docstring
+"""
+bioepic_skills package
+
+This package provides tools for working with BioEPIC APIs and data.
+"""
+
+# Add any other initialization code here

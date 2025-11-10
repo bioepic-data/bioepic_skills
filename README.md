@@ -37,6 +37,12 @@ python3 -m pip install --upgrade bioepic_skills
 ```
 to ensure you have the latest updates from this package.
 
-# Documentation
+## Documentation
 
-Documentation about available functions and helpful usage notes can be found in the `docs/` directory.
+Full documentation is available at [bioepic-data.github.io/bioepic_skills](https://bioepic-data.github.io/bioepic_skills/)
+
+To build documentation locally:
+
+```bash
+uv run mkdocs serve
+```
