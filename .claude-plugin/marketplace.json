@@ -5,8 +5,8 @@
     "email": "jhc@lbl.gov"
   },
   "metadata": {
-    "description": "Skills for grounding environmental and biological research terms to ontologies",
-    "version": "0.0.1"
+    "description": "Skills for grounding environmental and biological research terms to ontologies and extracting variables from ESS-DIVE",
+    "version": "0.2.0"
   },
   "plugins": [
     {
@@ -16,6 +16,15 @@
       "strict": false,
       "skills": [
         "./skills/ontology-grounding"
+      ]
+    },
+    {
+      "name": "essdive-extraction",
+      "description": "Skills for extracting and processing variable names from ESS-DIVE datasets",
+      "source": "./..",
+      "strict": false,
+      "skills": [
+        "./skills/essdive-extraction"
       ]
     }
   ]

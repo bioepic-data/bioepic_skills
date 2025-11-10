@@ -23,6 +23,26 @@ Skills for grounding environmental and biological research variable names to app
 
 See [ontology-grounding/SKILL.md](./ontology-grounding/SKILL.md) for full documentation.
 
+### essdive-extraction
+
+Skills for extracting and processing variable names from ESS-DIVE (Environmental System Science Data Infrastructure for a Virtual Ecosystem) datasets.
+
+**Key capabilities:**
+- Retrieve dataset metadata from ESS-DIVE API
+- Extract variable names from data files (CSV, TSV, Excel, XML)
+- Process data dictionaries with definitions and units
+- Match extracted terms against reference lists
+- Fuzzy matching for approximate term matching
+- Parallel processing for large datasets
+
+**Use cases:**
+- Dataset discovery and analysis
+- Ontology mapping of real-world data
+- Data standardization assessment
+- Cross-dataset integration
+
+See [essdive-extraction/SKILL.md](./essdive-extraction/SKILL.md) for full documentation.
+
 ## Use in Claude Code
 
 To use these skills in Claude Code:

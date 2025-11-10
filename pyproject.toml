@@ -20,6 +20,7 @@ dependencies = [
     "oaklib>=0.6.0",
     "typer>=0.9.0",
     "rich>=13.0.0",
+    "trowel @ git+https://github.com/bioepic-data/trowel.git",
 ]
 license-files = ["LICENSE"]
 
@@ -46,3 +47,6 @@ dev-dependencies = [
     "mkdocstrings[python]>=0.24.0",
     "ruff>=0.1.0",
 ]
+
+[tool.hatch.metadata]
+allow-direct-references = true

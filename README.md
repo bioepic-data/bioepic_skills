@@ -1,14 +1,25 @@
 # bioepic_skills
 
-A Python library for grounding terms to ontologies, especially **BERVO** (Biological and Environmental Research Variable Ontology), using the **Ontology Access Kit (OAK)**.
+A Python library for:
+1. **Ontology Grounding**: Ground terms to ontologies, especially **BERVO** (Biological and Environmental Research Variable Ontology), using the **Ontology Access Kit (OAK)**
+2. **ESS-DIVE Data Extraction**: Extract and process variable names from ESS-DIVE datasets using **trowel**
 
 ## Features
 
+### Ontology Grounding
 - 🔍 **Search** ontologies for terms with fuzzy matching
 - 📖 **Retrieve** detailed term information including definitions, synonyms, and relationships
 - 🎯 **Ground** text terms to ontology concepts with confidence scores
 - 🌐 **Access** multiple ontologies: BERVO, ENVO, ChEBI, NCBI Taxonomy, COMO, PO, MIXS
 - 🛠️ Built on the powerful [Ontology Access Kit (OAK)](https://incatools.github.io/ontology-access-kit/)
+
+### ESS-DIVE Data Extraction
+- 📦 **Retrieve** dataset metadata from ESS-DIVE API
+- 🔬 **Extract** variable names from data files (CSV, TSV, Excel, XML)
+- 📚 **Process** data dictionaries with definitions and units
+- 🔗 **Match** extracted terms against reference lists
+- ⚡ **Parallel processing** for large datasets
+- 🎯 Built on [trowel](https://github.com/bioepic-data/trowel)
 
 ## Installation
 
@@ -28,15 +39,10 @@ uv add bioepic_skills
 
 ### Command-Line Interface
 
-The package includes a `bioepic` command-line tool:
+The package includes a `bioepic` command-line tool with 9 commands:
 
+**Ontology Commands:**
 ```bash
-# Get help
-bioepic --help
-
-# Show version
-bioepic version
-
 # List available ontologies
 bioepic ontologies
 
@@ -51,6 +57,21 @@ bioepic term ENVO:00000001
 
 # Save results to JSON
 bioepic search "temperature" --ontology bervo --output results.json
+```
+
+**ESS-DIVE Commands:**
+```bash
+# Set up authentication token (required)
+export ESSDIVE_TOKEN="your-token-here"
+
+# Retrieve metadata for datasets
+bioepic essdive-metadata dois.txt --output ./data
+
+# Extract variable names from data files
+bioepic essdive-variables --output ./data --workers 20
+
+# Match extracted variables against BERVO terms
+bioepic match-terms variable_names.tsv bervo_terms.txt --fuzzy
 ```
 
 ### Python API

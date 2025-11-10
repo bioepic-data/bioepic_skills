@@ -5,7 +5,11 @@ code in this repository.
 
 ## Project Overview
 
-`bioepic_skills` is a Python library and CLI tool for grounding terms to ontologies using the Ontology Access Kit (OAK). The project focuses on environmental and biological research, with special emphasis on:
+`bioepic_skills` is a Python library and CLI tool for:
+1. **Ontology Grounding**: Ground terms to ontologies using the Ontology Access Kit (OAK)
+2. **ESS-DIVE Data Extraction**: Extract and process variable names from ESS-DIVE datasets using trowel
+
+The project focuses on environmental and biological research, with special emphasis on:
 
 - **BERVO** (Biological and Environmental Research Variable Ontology)
 - **ENVO** (Environment Ontology)
@@ -17,10 +21,23 @@ code in this repository.
 
 ### Key Components
 
-- **Python API**: Ontology grounding functions (`ontology_grounding.py`)
-- **CLI**: Typer-based command-line tool (`bioepic` command)
+- **Python API**: 
+  - Ontology grounding functions (`ontology_grounding.py`)
+  - Trowel wrapper functions (`trowel_wrapper.py`)
+- **CLI**: Typer-based command-line tool (`bioepic` command) with 9 commands:
+  - `ontologies` - List available ontologies
+  - `search` - Search for ontology terms
+  - `term` - Get detailed term information
+  - `ground` - Ground text terms to ontology concepts
+  - `essdive-metadata` - Retrieve ESS-DIVE dataset metadata
+  - `essdive-variables` - Extract variables from ESS-DIVE data files
+  - `match-terms` - Match terms against reference lists
+  - `version` - Show version
+  - `info` - Show project information
 - **OAK Integration**: Uses Ontology Access Kit for multiple ontology backends
+- **Trowel Integration**: Wraps trowel CLI for ESS-DIVE data extraction
 - **Rich Output**: Beautiful terminal output with tables and formatted text
+- **Claude Skills**: Agent-compatible skill definitions for Claude Code
 
 ## Development Commands
 
@@ -65,14 +82,16 @@ uv run bioepic --help
 uv run bioepic version
 uv run bioepic ontologies
 
-# Search for terms
+# Ontology grounding commands
 uv run bioepic search "soil moisture" --ontology bervo
-
-# Ground multiple terms
 uv run bioepic ground "air temperature" "precipitation" --ontology bervo
-
-# Get term details
 uv run bioepic term ENVO:00000001
+
+# ESS-DIVE data extraction commands (requires ESSDIVE_TOKEN)
+export ESSDIVE_TOKEN="your-token-here"
+uv run bioepic essdive-metadata dois.txt --output ./data
+uv run bioepic essdive-variables --output ./data
+uv run bioepic match-terms variable_names.tsv bervo_terms.txt --fuzzy
 
 # After installation, use directly
 bioepic --help
@@ -132,7 +151,7 @@ just docs-build
 
 ### Python API Architecture
 
-The library provides a functional API for ontology operations:
+The library provides a functional API for ontology operations and ESS-DIVE data extraction:
 
 **Core Module: `ontology_grounding.py`**
 
@@ -151,10 +170,22 @@ The library provides a functional API for ontology operations:
    - Supports multiple backends (BioPortal, SQLite, OLS)
    - Automatic adapter selection based on ontology configuration
 
+**Trowel Wrapper Module: `trowel_wrapper.py`**
+
+Provides Python interfaces to trowel CLI commands via subprocess calls:
+
+1. **Functions**:
+   - `get_essdive_metadata(doi_file, output_dir)`: Retrieve dataset metadata from ESS-DIVE
+   - `get_essdive_variables(filetable_path, output_dir, workers)`: Extract variables from data files
+   - `match_term_lists(terms_file, list_file, output, fuzzy, similarity_threshold)`: Match terms against reference
+
+2. **Error Handling**: Validates inputs, checks for required environment variables, captures stderr
+
 ### CLI Architecture (cli.py)
 
-The CLI is built with Typer and Rich, providing the following commands:
+The CLI is built with Typer and Rich, providing 9 commands:
 
+**Ontology Commands:**
 - **ontologies**: List available ontologies with descriptions
 - **search**: Search for ontology terms with filters and pagination
 - **term**: Get detailed information about a specific term (with relationships)
@@ -162,20 +193,33 @@ The CLI is built with Typer and Rich, providing the following commands:
 - **version**: Show version information
 - **info**: Show comprehensive project information
 
+**ESS-DIVE Commands:**
+- **essdive-metadata**: Retrieve metadata from ESS-DIVE datasets
+- **essdive-variables**: Extract variable names from data files
+- **match-terms**: Match extracted terms against reference lists
+
 All commands support:
 - Verbose logging (`-v`, `-vv`)
-- JSON output to file (`--output`)
+- JSON/TSV output to file (`--output`)
 - Pretty console display with Rich tables
 - Comprehensive help text with examples
 
 ### Data Flow
 
+**Ontology Grounding Flow:**
 1. User calls function or CLI command (e.g., `search_ontology("soil moisture", "bervo")`)
 2. Function retrieves ontology configuration from `ONTOLOGY_CONFIGS`
 3. Gets OAK adapter using `get_adapter(selector)` (e.g., `bioportal:BERVO`)
 4. Executes OAK operations (e.g., `adapter.basic_search()`)
 5. Processes results (labels, definitions, relationships)
 6. Returns structured data (tuples, dicts, lists)
+
+**ESS-DIVE Extraction Flow:**
+1. User calls wrapper function or CLI command (e.g., `essdive_metadata(doi_file, output_dir)`)
+2. Function validates inputs and environment (ESSDIVE_TOKEN)
+3. Constructs trowel CLI command
+4. Executes via subprocess, captures output
+5. Returns paths to generated files or raises exceptions on error
 
 ### Grounding Algorithm
 
