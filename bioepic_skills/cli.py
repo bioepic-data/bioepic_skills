@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Command-line interface for bioepic_skills.
+Command-line interface for bioepic_skills ontology grounding.
 
-Provides convenient access to BioEPIC API operations via the command line.
+Provides convenient access to ontology search and term grounding via the command line.
 """
 import json
 import logging
@@ -16,253 +16,359 @@ from rich.console import Console
 from rich.table import Table
 from rich.json import JSON
 from rich.logging import RichHandler
+from rich.panel import Panel
+from rich.markdown import Markdown
 
-from bioepic_skills.api_search import APISearch
-from bioepic_skills.data_processing import DataProcessing
-from bioepic_skills.utils import parse_filter
-from bioepic_skills.export_utils import export_records
+from bioepic_skills.ontology_grounding import (
+    search_ontology,
+    get_term_details,
+    ground_terms,
+    list_ontologies,
+)
 
 app = typer.Typer(
     name="bioepic",
-    help="BioEPIC Skills API utilities command-line interface",
+    help="BioEPIC Skills - Ontology grounding utilities using OAK",
     add_completion=False,
 )
 
 console = Console()
 error_console = Console(stderr=True)
 
-# Common options for all commands
-env_option = typer.Option(
-    "prod",
-    "--env", "-e",
-    help="API environment (prod or dev)",
-    envvar="BIOEPIC_ENV"
-)
-verbose_option = typer.Option(
-    0,
-    "--verbose", "-v",
-    count=True,
-    help="Increase verbosity: -v (INFO: show API URLs and timing), -vv (DEBUG: show full requests/responses)"
-)
-format_option = typer.Option(
-    "auto",
-    "--format", "-f",
-    help="Output format: json, csv, tsv, or auto (detect from file extension)"
-)
-
 
 def setup_logging(verbose: int = 0):
-    """
-    Configure logging based on verbosity level.
-
-    Args:
-        verbose: Verbosity level (0=WARNING, 1=INFO, 2+=DEBUG)
-    """
+    """Configure logging based on verbosity level."""
     if verbose == 0:
         level = logging.WARNING
     elif verbose == 1:
         level = logging.INFO
-    else:  # 2 or more
+    else:
         level = logging.DEBUG
-
+    
     logging.basicConfig(
         level=level,
         format="%(message)s",
-        handlers=[RichHandler(console=console, rich_tracebacks=True, show_time=True, show_path=False)],
-        force=True  # Override any existing logging configuration
+        handlers=[RichHandler(console=console, rich_tracebacks=True)]
     )
-
-
-def _display_results(results, output: Optional[Path] = None, format: str = "auto"):
-    """Display or export results to console or file."""
-    if not results:
-        console.print("[yellow]No results found.[/yellow]")
-        return
-
-    if output:
-        export_records(results, output, format)
-        console.print(f"[green]✓[/green] Exported {len(results)} record(s) to {output}")
-    else:
-        # Display to console
-        json_output = JSON(json.dumps(results, indent=2))
-        console.print(json_output)
-
-
-@app.command()
-def sample(
-    id: Optional[str] = typer.Option(None, "--id", help="Get sample by ID"),
-    filter: Optional[str] = typer.Option(None, "--filter", help="Filter query (YAML or JSON format)"),
-    limit: int = typer.Option(10, "--limit", "-l", help="Maximum number of records to return"),
-    all_pages: bool = typer.Option(False, "--all", "-a", help="Fetch all pages of results"),
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file (JSON/CSV/TSV)"),
-    format: str = format_option,
-    collection: str = typer.Option("samples", "--collection", "-c", help="Collection name to query"),
-    env: str = env_option,
-    verbose: int = verbose_option,
-):
-    """
-    Search and retrieve sample records.
-
-    Filter syntax supports both YAML and JSON formats:
-    - Simple: 'name: test'
-    - Nested: 'metadata.type: biological'
-    - JSON with operators: '{"status": {"$eq": "active"}}'
-
-    Examples:
-
-    \b
-        # Get a specific sample by ID
-        bioepic sample --id sample-123
-
-    \b
-        # Simple YAML filter
-        bioepic sample --filter 'type: biological' --limit 5
-
-    \b
-        # JSON filter with MongoDB operators
-        bioepic sample --filter '{"status": "active"}' --all
-
-    \b
-        # Export to CSV
-        bioepic sample --filter 'category: research' --limit 100 -o results.csv
-
-    \b
-        # Use different collection
-        bioepic sample --collection experiments --filter 'status: completed'
-    """
-    setup_logging(verbose)
-    client = APISearch(collection_name=collection, env=env)
-
-    try:
-        if id:
-            results = client.get_record_by_id(record_id=id)
-            _display_results([results] if isinstance(results, dict) else results, output, format)
-        else:
-            # Parse filter to handle both YAML and JSON
-            parsed_filter = ""
-            if filter:
-                try:
-                    parsed_filter = parse_filter(filter)
-                except ValueError as e:
-                    error_console.print(f"[red]Invalid filter syntax:[/red] {e}")
-                    raise typer.Exit(1)
-
-            results = client.get_records(filter=parsed_filter, max_page_size=limit, all_pages=all_pages)
-            _display_results(results, output, format)
-            
-            # Show summary
-            if results:
-                console.print(f"\n[green]Retrieved {len(results)} record(s)[/green]")
-    except Exception as e:
-        error_console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(1)
-
-
-@app.command()
-def search(
-    attribute: str = typer.Argument(..., help="Attribute name to search"),
-    value: str = typer.Argument(..., help="Attribute value to match"),
-    limit: int = typer.Option(10, "--limit", "-l", help="Maximum number of records to return"),
-    all_pages: bool = typer.Option(False, "--all", "-a", help="Fetch all pages of results"),
-    exact: bool = typer.Option(False, "--exact", help="Use exact matching instead of partial"),
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file (JSON/CSV/TSV)"),
-    format: str = format_option,
-    collection: str = typer.Option("samples", "--collection", "-c", help="Collection name to query"),
-    env: str = env_option,
-    verbose: int = verbose_option,
-):
-    """
-    Search records by specific attribute values.
-
-    Examples:
-
-    \b
-        # Search for samples by type
-        bioepic search type biological --limit 20
-
-    \b
-        # Exact match search
-        bioepic search id sample-123 --exact
-
-    \b
-        # Search and export all results
-        bioepic search category research --all -o research_samples.json
-
-    \b
-        # Search in different collection
-        bioepic search status active --collection experiments --all
-    """
-    setup_logging(verbose)
-    client = APISearch(collection_name=collection, env=env)
-
-    try:
-        results = client.get_record_by_attribute(
-            attribute_name=attribute,
-            attribute_value=value,
-            max_page_size=limit,
-            all_pages=all_pages,
-            exact_match=exact
-        )
-        
-        _display_results(results, output, format)
-        
-        if results:
-            console.print(f"\n[green]Found {len(results)} matching record(s)[/green]")
-    except Exception as e:
-        error_console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(1)
-
-
-@app.command()
-def collections(
-    env: str = env_option,
-    verbose: int = verbose_option,
-):
-    """
-    List available collections in the API.
-
-    Example:
-
-    \b
-        bioepic collections
-    """
-    setup_logging(verbose)
-    
-    # This would require implementation in api_base.py
-    console.print("[yellow]Collection listing not yet implemented.[/yellow]")
-    console.print("[dim]Commonly used collections: samples, experiments, data_objects[/dim]")
 
 
 @app.command()
 def version():
     """Show version information."""
-    from bioepic_skills import __version__
-    console.print(f"[bold]BioEPIC Skills[/bold] version [cyan]{__version__}[/cyan]")
+    console.print("BioEPIC Skills version 0.2.0", style="bold green")
 
 
 @app.command()
-def info(
-    env: str = env_option,
-):
-    """Show API configuration and connection info."""
-    from bioepic_skills.api_base import APIBase
+def ontologies():
+    """List available ontologies."""
+    ontology_list = list_ontologies()
     
-    api = APIBase(env=env)
+    table = Table(title="Available Ontologies", show_header=True)
+    table.add_column("ID", style="cyan", no_wrap=True)
+    table.add_column("Name", style="magenta")
+    table.add_column("Description")
+    table.add_column("Selector", style="dim")
     
-    table = Table(title="BioEPIC API Configuration")
-    table.add_column("Setting", style="cyan")
-    table.add_column("Value", style="green")
-    
-    table.add_row("Environment", env)
-    table.add_row("Base URL", api.base_url)
+    for ont in ontology_list:
+        table.add_row(
+            ont["id"],
+            ont["name"],
+            ont["description"],
+            ont["selector"]
+        )
     
     console.print(table)
 
 
-def main():
-    """Main entry point for CLI."""
-    app()
+@app.command()
+def search(
+    query: str = typer.Argument(..., help="Search term to look up"),
+    ontology: Optional[str] = typer.Option(
+        None,
+        "--ontology", "-o",
+        help="Ontology to search (e.g., 'bervo', 'envo', 'chebi'). Leave empty to search all."
+    ),
+    limit: int = typer.Option(
+        10,
+        "--limit", "-n",
+        help="Maximum number of results to return"
+    ),
+    verbose: int = typer.Option(
+        0,
+        "--verbose", "-v",
+        count=True,
+        help="Increase verbosity (-v, -vv)"
+    ),
+    output: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        help="Save results to JSON file"
+    ),
+):
+    """
+    Search for ontology terms.
+    
+    Examples:
+    
+        bioepic search "soil moisture" --ontology bervo
+        
+        bioepic search "temperature" --limit 5
+        
+        bioepic search "precipitation" -o bervo --output results.json
+    """
+    setup_logging(verbose)
+    
+    console.print(f"\n[bold]Searching for:[/bold] {query}")
+    if ontology:
+        console.print(f"[bold]Ontology:[/bold] {ontology}")
+    else:
+        console.print("[bold]Ontology:[/bold] All ontologies")
+    console.print()
+    
+    with console.status("[bold green]Searching...", spinner="dots"):
+        results = search_ontology(query, ontology, limit)
+    
+    if not results:
+        error_console.print(f"[yellow]No results found for '{query}'[/yellow]")
+        sys.exit(1)
+    
+    # Display results in a table
+    table = Table(show_header=True, header_style="bold cyan")
+    table.add_column("Term ID", style="cyan", no_wrap=True)
+    table.add_column("Ontology", style="magenta", no_wrap=True)
+    table.add_column("Label", style="green")
+    
+    for term_id, ont_id, label in results:
+        table.add_row(term_id, ont_id, label)
+    
+    console.print(table)
+    console.print(f"\n[dim]Found {len(results)} results[/dim]\n")
+    
+    # Save to file if requested
+    if output:
+        output_data = [
+            {"term_id": tid, "ontology_id": oid, "label": label}
+            for tid, oid, label in results
+        ]
+        with open(output, "w") as f:
+            json.dump(output_data, f, indent=2)
+        console.print(f"[green]✓[/green] Results saved to {output}")
+
+
+@app.command()
+def term(
+    term_id: str = typer.Argument(..., help="Term ID to retrieve (e.g., 'ENVO:00000001')"),
+    ontology: Optional[str] = typer.Option(
+        None,
+        "--ontology", "-o",
+        help="Ontology containing the term"
+    ),
+    verbose: int = typer.Option(
+        0,
+        "--verbose", "-v",
+        count=True,
+        help="Increase verbosity"
+    ),
+    output: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        help="Save details to JSON file"
+    ),
+):
+    """
+    Get detailed information about a specific ontology term.
+    
+    Examples:
+    
+        bioepic term ENVO:00000001
+        
+        bioepic term CHEBI:17234 --ontology chebi
+        
+        bioepic term ENVO:00000001 --output term_details.json
+    """
+    setup_logging(verbose)
+    
+    console.print(f"\n[bold]Retrieving details for:[/bold] {term_id}\n")
+    
+    with console.status("[bold green]Fetching...", spinner="dots"):
+        details = get_term_details(term_id, ontology)
+    
+    if "error" in details:
+        error_console.print(f"[red]Error:[/red] {details['error']}")
+        sys.exit(1)
+    
+    # Display term details
+    console.print(Panel(
+        f"[bold cyan]{details['term_id']}[/bold cyan]\n"
+        f"[bold]{details['label']}[/bold]\n\n"
+        f"{details.get('definition', 'No definition available')}",
+        title="Term Details",
+        border_style="cyan"
+    ))
+    
+    # Display synonyms
+    if details.get('synonyms'):
+        console.print("\n[bold]Synonyms:[/bold]")
+        for syn in details['synonyms']:
+            console.print(f"  • {syn}")
+    
+    # Display relationships
+    if details.get('relationships'):
+        console.print("\n[bold]Relationships:[/bold]")
+        for rel, fillers in details['relationships'].items():
+            console.print(f"\n  [cyan]{rel}:[/cyan]")
+            for filler in fillers:
+                console.print(f"    → {filler['id']}: {filler['label']}")
+    
+    console.print()
+    
+    # Save to file if requested
+    if output:
+        with open(output, "w") as f:
+            json.dump(details, f, indent=2)
+        console.print(f"[green]✓[/green] Details saved to {output}")
+
+
+@app.command()
+def ground(
+    terms: list[str] = typer.Argument(..., help="Terms to ground (space-separated)"),
+    ontology: Optional[str] = typer.Option(
+        None,
+        "--ontology", "-o",
+        help="Target ontology (e.g., 'bervo', 'envo')"
+    ),
+    threshold: float = typer.Option(
+        0.8,
+        "--threshold", "-t",
+        help="Minimum confidence threshold (0.0-1.0)"
+    ),
+    limit: int = typer.Option(
+        3,
+        "--limit", "-n",
+        help="Maximum matches per term"
+    ),
+    verbose: int = typer.Option(
+        0,
+        "--verbose", "-v",
+        count=True,
+        help="Increase verbosity"
+    ),
+    output: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        help="Save grounding results to JSON file"
+    ),
+):
+    """
+    Ground text terms to ontology concepts.
+    
+    This command searches for ontology terms that best match your input text
+    and returns confidence-scored matches.
+    
+    Examples:
+    
+        bioepic ground "soil moisture" "air temperature" "precipitation" --ontology bervo
+        
+        bioepic ground "pH" "salinity" --threshold 0.9
+        
+        bioepic ground "soil" "water" --ontology envo --output grounding.json
+    """
+    setup_logging(verbose)
+    
+    console.print(f"\n[bold]Grounding {len(terms)} terms[/bold]")
+    if ontology:
+        console.print(f"[bold]Target ontology:[/bold] {ontology}")
+    else:
+        console.print("[bold]Target ontology:[/bold] All ontologies")
+    console.print(f"[bold]Threshold:[/bold] {threshold}\n")
+    
+    with console.status("[bold green]Grounding terms...", spinner="dots"):
+        results = ground_terms(terms, ontology, threshold, limit)
+    
+    # Display results
+    for text_term, matches in results.items():
+        console.print(f"\n[bold cyan]'{text_term}'[/bold cyan]")
+        
+        if not matches:
+            console.print("  [yellow]No matches found[/yellow]")
+            continue
+        
+        table = Table(show_header=True, box=None, pad_edge=False)
+        table.add_column("Term ID", style="cyan", no_wrap=True)
+        table.add_column("Label", style="green")
+        table.add_column("Ontology", style="magenta", no_wrap=True)
+        table.add_column("Confidence", style="yellow", justify="right")
+        
+        for match in matches:
+            table.add_row(
+                match["term_id"],
+                match["label"],
+                match["ontology_id"],
+                f"{match['confidence']:.2f}"
+            )
+        
+        console.print(table)
+    
+    console.print()
+    
+    # Save to file if requested
+    if output:
+        with open(output, "w") as f:
+            json.dump(results, f, indent=2)
+        console.print(f"[green]✓[/green] Results saved to {output}")
+
+
+@app.command()
+def info():
+    """Show information about BioEPIC Skills and OAK."""
+    info_text = """
+# BioEPIC Skills - Ontology Grounding Toolkit
+
+This tool provides functions for grounding terms to ontologies using the 
+**Ontology Access Kit (OAK)**.
+
+## Key Features
+
+- 🔍 **Search** ontologies for terms
+- 📖 **Retrieve** detailed term information
+- 🎯 **Ground** text terms to ontology concepts
+- 🌐 **Access** multiple ontologies (BERVO, ENVO, ChEBI, GO, etc.)
+
+## Special Support for BERVO
+
+**BERVO** (Biological and Environmental Research Variable Ontology) 
+is accessed through BioPortal and provides comprehensive vocabulary for:
+
+- Environmental research variables and conditions
+- Earth science experimental variables
+- Plant science measurements
+- Geochemistry conditions
+- Biological and physicochemical processes
+
+## Quick Examples
+
+Search BERVO for a term:
+```bash
+bioepic search "soil moisture" --ontology bervo
+```
+
+Ground multiple terms:
+```bash
+bioepic ground "air temperature" "precipitation" "soil pH" --ontology bervo
+```
+
+Get term details:
+```bash
+bioepic term ENVO:00000001
+```
+
+## Documentation
+
+- OAK Documentation: https://incatools.github.io/ontology-access-kit/
+- BERVO on BioPortal: https://bioportal.bioontology.org/ontologies/BERVO
+"""
+    console.print(Markdown(info_text))
 
 
 if __name__ == "__main__":
-    main()
+    app()

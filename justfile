@@ -60,13 +60,17 @@ docs-build:
 cli-test:
     uv run bioepic --help
 
-# Test sample command
-cli-sample:
-    uv run bioepic sample --id sample-123 || echo "Sample not found (expected)"
-
-# Test search command
+# Test search command with ENVO
 cli-search:
-    uv run bioepic search type test --limit 5 || echo "No results (expected)"
+    uv run bioepic search "soil" --ontology envo --limit 3 || echo "Search test (may require network)"
+
+# Test ontologies list
+cli-ontologies:
+    uv run bioepic ontologies
+
+# Test version command
+cli-version:
+    uv run bioepic version
 
 # ============ Package Management ============
 
@@ -125,8 +129,9 @@ env-info:
 # Show project info
 project-info:
     @echo "Project: bioepic_skills"
-    @echo "Version: 0.1.0"
+    @echo "Version: 0.2.0"
     @echo "Python: >=3.10"
     @echo ""
     @echo "CLI command: bioepic"
+    @echo "Purpose: Ontology grounding with OAK"
     @echo "Documentation: http://127.0.0.1:8000 (run 'just docs')"
