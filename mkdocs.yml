@@ -37,6 +37,7 @@ nav:
       - Quick Start: getting-started/quickstart.md
   - User Guide:
       - Usage: user-guide/usage.md
+      - Command-Line Interface: user-guide/cli.md
       - Authentication: user-guide/authentication.md
       - Data Processing: user-guide/data-processing.md
   - API Reference:
