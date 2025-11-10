@@ -7,7 +7,7 @@ A Python library for grounding terms to ontologies, especially **BERVO** (Biolog
 - 🔍 **Search** ontologies for terms with fuzzy matching
 - 📖 **Retrieve** detailed term information including definitions, synonyms, and relationships
 - 🎯 **Ground** text terms to ontology concepts with confidence scores
-- 🌐 **Access** multiple ontologies: BERVO, ENVO, ChEBI, GO, NCBI Taxonomy, Uberon
+- 🌐 **Access** multiple ontologies: BERVO, ENVO, ChEBI, NCBI Taxonomy, COMO, PO, MIXS
 - 🛠️ Built on the powerful [Ontology Access Kit (OAK)](https://incatools.github.io/ontology-access-kit/)
 
 ## Installation
@@ -101,9 +101,10 @@ BERVO models the experimental variables, conditions, and concepts used in enviro
 - **BERVO** - Biological and Environmental Research Variables (via BioPortal)
 - **ENVO** - Environment Ontology
 - **ChEBI** - Chemical Entities of Biological Interest
-- **GO** - Gene Ontology
 - **NCBI Taxonomy** - Organism taxonomy
-- **Uberon** - Cross-species anatomy
+- **COMO** - Context and Measurement Ontology (via BioPortal)
+- **PO** - Plant Ontology
+- **MIXS** - Minimal Information about any Sequence (via BioPortal)
 
 ## Development
 

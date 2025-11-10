@@ -332,7 +332,7 @@ This tool provides functions for grounding terms to ontologies using the
 - 🔍 **Search** ontologies for terms
 - 📖 **Retrieve** detailed term information
 - 🎯 **Ground** text terms to ontology concepts
-- 🌐 **Access** multiple ontologies (BERVO, ENVO, ChEBI, GO, etc.)
+- 🌐 **Access** multiple ontologies (BERVO, ENVO, ChEBI, NCBI Taxonomy, COMO, PO, MIXS)
 
 ## Special Support for BERVO
 

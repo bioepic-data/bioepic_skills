@@ -38,15 +38,20 @@ ONTOLOGY_CONFIGS = {
         "name": "NCBI Taxonomy",
         "description": "Taxonomy database from NCBI",
     },
-    "go": {
-        "selector": "sqlite:obo:go",
-        "name": "Gene Ontology",
-        "description": "GO covers molecular functions, biological processes, and cellular components",
+    "como": {
+        "selector": "bioportal:COMO",
+        "name": "Context and Measurement Ontology",
+        "description": "COMO provides terms for describing experimental data in environmental microbiology",
     },
-    "uberon": {
-        "selector": "sqlite:obo:uberon",
-        "name": "Uberon",
-        "description": "Cross-species anatomy ontology",
+    "po": {
+        "selector": "sqlite:obo:po",
+        "name": "Plant Ontology",
+        "description": "PO covers plant anatomy, morphology, and developmental stages",
+    },
+    "mixs": {
+        "selector": "bioportal:MIXS",
+        "name": "Minimal Information about any Sequence",
+        "description": "MIXS provides standards for describing genomic and metagenomic sequences",
     },
 }
 
