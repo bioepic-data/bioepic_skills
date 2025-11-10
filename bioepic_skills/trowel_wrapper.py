@@ -7,7 +7,6 @@ making them available as agent-compatible functions.
 
 import os
 import subprocess
-from pathlib import Path
 from typing import Optional
 
 

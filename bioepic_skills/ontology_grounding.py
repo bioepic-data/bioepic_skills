@@ -11,7 +11,7 @@ from typing import Optional
 import urllib.error
 
 from oaklib import get_adapter
-from oaklib.interfaces import OboGraphInterface, SearchInterface
+from oaklib.interfaces import OboGraphInterface
 
 logger = logging.getLogger(__name__)
 

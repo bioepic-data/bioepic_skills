@@ -11,10 +11,8 @@ from pathlib import Path
 from typing import Optional
 
 import typer
-from rich import print as rprint
 from rich.console import Console
 from rich.table import Table
-from rich.json import JSON
 from rich.logging import RichHandler
 from rich.panel import Panel
 from rich.markdown import Markdown
@@ -357,7 +355,7 @@ def essdive_metadata(
     """
     setup_logging(verbose)
     
-    console.print(f"\n[bold]Retrieving ESS-DIVE metadata[/bold]")
+    console.print("\n[bold]Retrieving ESS-DIVE metadata[/bold]")
     console.print(f"DOI file: {doi_file}")
     console.print(f"Output directory: {output_dir}\n")
     
@@ -422,7 +420,7 @@ def essdive_variables(
     """
     setup_logging(verbose)
     
-    console.print(f"\n[bold]Extracting ESS-DIVE variables[/bold]")
+    console.print("\n[bold]Extracting ESS-DIVE variables[/bold]")
     console.print(f"Output directory: {output_dir}")
     console.print(f"Workers: {workers}\n")
     
@@ -434,7 +432,7 @@ def essdive_variables(
                 workers
             )
         
-        console.print(f"[green]✓[/green] Variable extraction complete!")
+        console.print("[green]✓[/green] Variable extraction complete!")
         console.print(f"Output file: [cyan]{output_file}[/cyan]\n")
         
     except Exception as e:
@@ -484,7 +482,7 @@ def match_terms(
     """
     setup_logging(verbose)
     
-    console.print(f"\n[bold]Matching terms[/bold]")
+    console.print("\n[bold]Matching terms[/bold]")
     console.print(f"Terms file: {terms_file}")
     console.print(f"Reference list: {list_file}")
     if fuzzy:
@@ -501,7 +499,7 @@ def match_terms(
                 threshold
             )
         
-        console.print(f"[green]✓[/green] Term matching complete!")
+        console.print("[green]✓[/green] Term matching complete!")
         console.print(f"Output file: [cyan]{output_file}[/cyan]\n")
         
     except Exception as e:

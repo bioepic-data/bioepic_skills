@@ -2,7 +2,6 @@
 """
 Tests for ontology grounding functionality.
 """
-import pytest
 from bioepic_skills.ontology_grounding import (
     list_ontologies,
     ONTOLOGY_CONFIGS,
