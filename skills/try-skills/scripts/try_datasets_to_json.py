@@ -6,7 +6,10 @@ import argparse
 import json
 from pathlib import Path
 
-from bioepic_skills.try_parser import parse_try_datasets_html_with_header
+from bioepic_skills.try_parser import (
+    parse_try_dataset_entries_html,
+    parse_try_datasets_html_with_header,
+)
 
 
 def _write_json(records, output_path: Path | None) -> None:
@@ -19,7 +22,15 @@ def _write_json(records, output_path: Path | None) -> None:
 def _write_tsv(header, records, output_path: Path | None) -> None:
     lines = ["\t".join(header)]
     for record in records:
-        lines.append("\t".join(record.get(col, "") for col in header))
+        row = []
+        for col in header:
+            value = record.get(col, "")
+            if isinstance(value, list):
+                value = ", ".join(value)
+            elif isinstance(value, dict):
+                value = json.dumps(value, ensure_ascii=False)
+            row.append(value)
+        lines.append("\t".join(row))
     output = "\n".join(lines)
     if output_path:
         output_path.write_text(output + "\n", encoding="utf-8")
@@ -45,10 +56,48 @@ def main() -> int:
         default=None,
         help="Write output to file (defaults to stdout)",
     )
+    parser.add_argument(
+        "--detailed",
+        action="store_true",
+        help="Parse detailed dataset entries (includes field list)",
+    )
 
     args = parser.parse_args()
     html_text = Path(args.html_path).read_text(encoding="utf-8")
-    header, records = parse_try_datasets_html_with_header(html_text)
+    if args.detailed:
+        entries = parse_try_dataset_entries_html(html_text)
+        records = [
+            {
+                **{k: v for k, v in entry.__dict__.items() if k != "extra_fields"},
+                "extra_fields": entry.extra_fields,
+            }
+            for entry in entries
+        ]
+        if args.format == "tsv":
+            header = [
+                "title",
+                "try_file_archive_id",
+                "rights_of_use",
+                "publication_date",
+                "version",
+                "author",
+                "contributors",
+                "reference_publication",
+                "reference_data_package",
+                "doi",
+                "format",
+                "file_name",
+                "description",
+                "geolocation",
+                "temporal_coverage",
+                "taxonomic_coverage",
+                "field_list",
+                "extra_fields",
+            ]
+        else:
+            header = []
+    else:
+        header, records = parse_try_datasets_html_with_header(html_text)
 
     output_path = Path(args.output) if args.output else None
     if args.format == "tsv":

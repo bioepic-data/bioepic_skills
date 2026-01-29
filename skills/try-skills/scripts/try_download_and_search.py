@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 import argparse
-import re
 import json
+import re
 import ssl
+import sys
+from pathlib import Path
 from urllib import request
+
+ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
 
 from bioepic_skills.try_parser import parse_try_datasets_html_with_header
 

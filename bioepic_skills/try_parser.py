@@ -34,6 +34,30 @@ class TryTraitRecord:
     acc_spec_num: Optional[int]
 
 
+@dataclass(frozen=True)
+class TryDatasetEntry:
+    """Normalized representation of a TRY dataset entry."""
+
+    title: str
+    try_file_archive_id: Optional[str]
+    rights_of_use: Optional[str]
+    publication_date: Optional[str]
+    version: Optional[str]
+    author: Optional[str]
+    contributors: Optional[str]
+    reference_publication: Optional[str]
+    reference_data_package: Optional[str]
+    doi: Optional[str]
+    format: Optional[str]
+    file_name: Optional[str]
+    description: Optional[str]
+    geolocation: Optional[str]
+    temporal_coverage: Optional[str]
+    taxonomic_coverage: Optional[str]
+    field_list: list[str]
+    extra_fields: dict[str, str]
+
+
 class _HtmlTablesParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
@@ -161,6 +185,83 @@ def parse_try_datasets_html_with_header(
     if not rows:
         return [], []
     return header, _rows_to_dicts(header, rows[1:])
+
+
+def parse_try_dataset_entries_html(html_text: str) -> list[TryDatasetEntry]:
+    """Parse TRY dataset entries from the datasets page HTML."""
+    parser = _HtmlTablesParser()
+    parser.feed(html_text)
+
+    entries: list[TryDatasetEntry] = []
+    for table in parser.tables:
+        if not table or len(table) < 2:
+            continue
+        first_cell = table[0][0].strip() if table[0] else ""
+        if "Title" not in first_cell:
+            continue
+
+        field_map: dict[str, str] = {}
+        for row in table:
+            if len(row) < 2:
+                continue
+            key = row[0].strip()
+            value = row[1].strip()
+            if key.endswith(":"):
+                key = key[:-1].strip()
+            if key:
+                field_map[key] = value
+
+        title = field_map.get("Title", "")
+        field_list_raw = field_map.get("Field list", "")
+        field_list = [item.strip() for item in field_list_raw.split(",") if item.strip()]
+
+        entries.append(
+            TryDatasetEntry(
+                title=title,
+                try_file_archive_id=field_map.get("TRY File Archive ID"),
+                rights_of_use=field_map.get("Rights of use"),
+                publication_date=field_map.get("Publication Date"),
+                version=field_map.get("Version"),
+                author=field_map.get("Author"),
+                contributors=field_map.get("Contributors"),
+                reference_publication=field_map.get("Reference to publication"),
+                reference_data_package=field_map.get("Reference to data package"),
+                doi=field_map.get("DOI"),
+                format=field_map.get("Format"),
+                file_name=field_map.get("File name"),
+                description=field_map.get("Description"),
+                geolocation=field_map.get("Geolocation"),
+                temporal_coverage=field_map.get("Temporal coverage"),
+                taxonomic_coverage=field_map.get("Taxonomic coverage"),
+                field_list=field_list,
+                extra_fields={
+                    key: value
+                    for key, value in field_map.items()
+                    if key
+                    not in {
+                        "Title",
+                        "TRY File Archive ID",
+                        "Rights of use",
+                        "Publication Date",
+                        "Version",
+                        "Author",
+                        "Contributors",
+                        "Reference to publication",
+                        "Reference to data package",
+                        "DOI",
+                        "Format",
+                        "File name",
+                        "Description",
+                        "Geolocation",
+                        "Temporal coverage",
+                        "Taxonomic coverage",
+                        "Field list",
+                    }
+                },
+            )
+        )
+
+    return entries
 
 
 def _rows_to_dicts(header: list[str], rows: list[list[str]]) -> list[dict[str, str]]:

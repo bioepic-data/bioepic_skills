@@ -236,3 +236,19 @@ python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --for
 ```bash
 python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --format tsv --output try_datasets.tsv
 ```
+
+Use the detailed parser (includes field list and extra fields):
+
+```bash
+python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --detailed --format json --output try_datasets_detailed.json
+```
+
+```bash
+python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --detailed --format tsv --output try_datasets_detailed.tsv
+```
+
+Filter datasets by keywords in `field_list` (or other fields):
+
+```bash
+python skills/try-skills/scripts/try_datasets_filter.py try_datasets_detailed.json --pattern "snow|snowpack" --fields "title,description,field_list" --output try_datasets_snow.json
+```
