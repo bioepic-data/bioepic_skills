@@ -59,6 +59,22 @@ Skills for searching ESS-DIVE datasets via the Dataset API.
 
 See [essdive-search/SKILL.md](./essdive-search/SKILL.md) for full documentation.
 
+### try-skills
+
+Skills for discovering datasets, traits, and species information from the TRY plant trait database.
+
+**Key capabilities:**
+- Search TRY dataset listings by keyword
+- Access the full TRY trait list
+- Access the list of species with TRY annotations
+
+**Use cases:**
+- Dataset discovery in TRY
+- Trait lookup and terminology alignment
+- Species coverage checks
+
+See [try-skills/SKILL.md](./try-skills/SKILL.md) for full documentation.
+
 ## Use in Claude Code
 
 To use these skills in Claude Code:
