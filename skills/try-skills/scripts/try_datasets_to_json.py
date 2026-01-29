@@ -34,6 +34,8 @@ def _write_tsv(header, records, output_path: Path | None) -> None:
                 value = ", ".join(value)
             elif isinstance(value, dict):
                 value = json.dumps(value, ensure_ascii=False)
+            if isinstance(value, str):
+                value = value.replace("\t", " ").replace("\r", " ").replace("\n", " ")
             row.append(value)
         lines.append("\t".join(row))
     output = "\n".join(lines)
