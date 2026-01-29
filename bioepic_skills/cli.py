@@ -17,6 +17,12 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 from rich.markdown import Markdown
 
+from bioepic_skills.essdive_api import (
+    DEFAULT_ESSDIVE_BASE_URL,
+    EssdiveApiError,
+    get_essdive_package,
+    search_essdive_packages,
+)
 from bioepic_skills.ontology_grounding import (
     search_ontology,
     get_term_details,
@@ -53,6 +59,20 @@ def setup_logging(verbose: int = 0):
         format="%(message)s",
         handlers=[RichHandler(console=console, rich_tracebacks=True)]
     )
+
+
+def _parse_kv_params(params: Optional[list[str]]) -> dict[str, str]:
+    parsed: dict[str, str] = {}
+    if not params:
+        return parsed
+    for item in params:
+        if "=" not in item:
+            raise typer.BadParameter("Parameters must be in key=value form.")
+        key, value = item.split("=", 1)
+        if not key:
+            raise typer.BadParameter("Parameter keys cannot be empty.")
+        parsed[key] = value
+    return parsed
 
 
 @app.command()
@@ -440,6 +460,153 @@ def essdive_variables(
         sys.exit(1)
 
 
+@app.command("essdive-search")
+def essdive_search(
+    keyword: Optional[str] = typer.Option(
+        None,
+        "--keyword", "-k",
+        help="Keyword to search for (maps to API keyword parameter)."
+    ),
+    provider_name: Optional[str] = typer.Option(
+        None,
+        "--provider-name", "-p",
+        help="Provider/project name (maps to API providerName parameter)."
+    ),
+    page_size: int = typer.Option(
+        25,
+        "--page-size",
+        help="Number of records to return per page."
+    ),
+    row_start: int = typer.Option(
+        0,
+        "--row-start",
+        help="Row offset for pagination."
+    ),
+    is_public: bool = typer.Option(
+        True,
+        "--public/--include-private",
+        help="Limit to public packages unless you include private datasets."
+    ),
+    param: Optional[list[str]] = typer.Option(
+        None,
+        "--param",
+        help="Extra query parameter in key=value form. Can be provided multiple times."
+    ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        envvar="ESSDIVE_TOKEN",
+        help="ESS-DIVE API token (defaults to ESSDIVE_TOKEN env var)."
+    ),
+    base_url: str = typer.Option(
+        DEFAULT_ESSDIVE_BASE_URL,
+        "--base-url",
+        help="ESS-DIVE API base URL."
+    ),
+    output: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        help="Save the full JSON response to a file."
+    ),
+    verbose: int = typer.Option(
+        0,
+        "--verbose", "-v",
+        count=True,
+        help="Increase verbosity"
+    ),
+):
+    """
+    Search ESS-DIVE datasets via the Dataset API.
+
+    Examples:
+
+        bioepic essdive-search --keyword "soil" --page-size 10
+
+        bioepic essdive-search --provider-name "Project Name"
+
+        bioepic essdive-search --param "doi=10.15485/1234567"
+    """
+    setup_logging(verbose)
+    extra_params = _parse_kv_params(param)
+
+    try:
+        results = search_essdive_packages(
+            keyword=keyword,
+            provider_name=provider_name,
+            page_size=page_size,
+            row_start=row_start,
+            is_public=is_public,
+            extra_params=extra_params,
+            token=token,
+            base_url=base_url,
+        )
+    except EssdiveApiError as exc:
+        error_console.print(f"[red]Error:[/red] {exc}")
+        sys.exit(1)
+
+    if output:
+        with open(output, "w") as f:
+            json.dump(results, f, indent=2)
+        console.print(f"[green]✓[/green] Results saved to {output}")
+    else:
+        console.print_json(json.dumps(results))
+
+
+@app.command("essdive-dataset")
+def essdive_dataset(
+    package_id: str = typer.Argument(..., help="ESS-DIVE package ID"),
+    is_public: bool = typer.Option(
+        True,
+        "--public/--include-private",
+        help="Treat the dataset as public unless you include private datasets."
+    ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        envvar="ESSDIVE_TOKEN",
+        help="ESS-DIVE API token (defaults to ESSDIVE_TOKEN env var)."
+    ),
+    base_url: str = typer.Option(
+        DEFAULT_ESSDIVE_BASE_URL,
+        "--base-url",
+        help="ESS-DIVE API base URL."
+    ),
+    output: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        help="Save the full JSON response to a file."
+    ),
+    verbose: int = typer.Option(
+        0,
+        "--verbose", "-v",
+        count=True,
+        help="Increase verbosity"
+    ),
+):
+    """
+    Fetch a single ESS-DIVE dataset by package ID.
+    """
+    setup_logging(verbose)
+
+    try:
+        dataset = get_essdive_package(
+            package_id=package_id,
+            is_public=is_public,
+            token=token,
+            base_url=base_url,
+        )
+    except EssdiveApiError as exc:
+        error_console.print(f"[red]Error:[/red] {exc}")
+        sys.exit(1)
+
+    if output:
+        with open(output, "w") as f:
+            json.dump(dataset, f, indent=2)
+        console.print(f"[green]✓[/green] Dataset saved to {output}")
+    else:
+        console.print_json(json.dumps(dataset))
+
+
 @app.command()
 def match_terms(
     terms_file: Path = typer.Argument(..., help="TSV file with terms in first column"),
@@ -529,6 +696,8 @@ using **trowel**.
 - 📦 **Retrieve** dataset metadata from ESS-DIVE
 - 🔬 **Extract** variable names from data files
 - 🔗 **Match** extracted terms against reference lists
+- 🔎 **Search** ESS-DIVE datasets via the API
+- 📄 **Fetch** a single ESS-DIVE dataset record
 
 ## Special Support for BERVO
 
@@ -561,6 +730,11 @@ bioepic essdive-metadata dois.txt --output ./data
 Extract variables from ESS-DIVE datasets:
 ```bash
 bioepic essdive-variables --output ./data
+```
+
+Search ESS-DIVE datasets:
+```bash
+bioepic essdive-search --keyword "soil" --page-size 10
 ```
 
 ## Documentation

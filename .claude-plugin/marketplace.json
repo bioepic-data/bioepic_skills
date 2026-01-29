@@ -26,6 +26,15 @@
       "skills": [
         "./skills/essdive-extraction"
       ]
+    },
+    {
+      "name": "essdive-search",
+      "description": "Skills for searching ESS-DIVE datasets via the Dataset API",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/essdive-search"
+      ]
     }
   ]
 }

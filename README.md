@@ -18,6 +18,8 @@ A Python library for:
 - 🔬 **Extract** variable names from data files (CSV, TSV, Excel, XML)
 - 📚 **Process** data dictionaries with definitions and units
 - 🔗 **Match** extracted terms against reference lists
+- 🔎 **Search** ESS-DIVE datasets via the API
+- 📄 **Fetch** a single ESS-DIVE dataset record
 - ⚡ **Parallel processing** for large datasets
 - 🎯 Built on [trowel](https://github.com/bioepic-data/trowel)
 
@@ -39,7 +41,7 @@ uv add bioepic_skills
 
 ### Command-Line Interface
 
-The package includes a `bioepic` command-line tool with 9 commands:
+The package includes a `bioepic` command-line tool with 11 commands:
 
 **Ontology Commands:**
 ```bash
@@ -70,6 +72,12 @@ bioepic essdive-metadata dois.txt --output ./data
 # Extract variable names from data files
 bioepic essdive-variables --output ./data --workers 20
 
+# Search for datasets
+bioepic essdive-search --keyword "soil" --page-size 10
+
+# Fetch a dataset record
+bioepic essdive-dataset 7a9f0b1f-1234-5678-9abc-def012345678
+
 # Match extracted variables against BERVO terms
 bioepic match-terms variable_names.tsv bervo_terms.txt --fuzzy
 ```
@@ -84,6 +92,7 @@ from bioepic_skills.ontology_grounding import (
     get_term_details,
     ground_terms
 )
+from bioepic_skills.essdive_api import search_essdive_packages
 
 # Search for environmental research variables in BERVO
 results = search_ontology("soil moisture", ontology_id="bervo", limit=5)
@@ -103,6 +112,10 @@ for text_term, matches in results.items():
     print(f"\n{text_term}:")
     for match in matches:
         print(f"  {match['term_id']}: {match['label']} (confidence: {match['confidence']})")
+
+# Search ESS-DIVE datasets by keyword
+datasets = search_essdive_packages(keyword="soil", page_size=5)
+print(datasets)
 ```
 
 ## About BERVO
@@ -158,6 +171,16 @@ uv run mkdocs serve
 # or
 just docs
 ```
+
+## Skills
+
+This repository includes agent skills for Claude Code and similar tools:
+
+- `ontology-grounding` for ontology lookup and grounding
+- `essdive-extraction` for ESS-DIVE metadata/variable extraction and term matching
+- `essdive-search` for ESS-DIVE Dataset API search and dataset fetch
+
+See `skills/README.md` for details.
 
 ## Resources
 

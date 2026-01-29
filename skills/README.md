@@ -43,6 +43,22 @@ Skills for extracting and processing variable names from ESS-DIVE (Environmental
 
 See [essdive-extraction/SKILL.md](./essdive-extraction/SKILL.md) for full documentation.
 
+### essdive-search
+
+Skills for searching ESS-DIVE datasets via the Dataset API.
+
+**Key capabilities:**
+- Search datasets by keyword, provider/project name, or custom parameters
+- Fetch a single dataset record by package ID
+- Optional token support for private datasets
+
+**Use cases:**
+- Dataset discovery
+- Quick dataset metadata lookup
+- Integrating ESS-DIVE search into workflows
+
+See [essdive-search/SKILL.md](./essdive-search/SKILL.md) for full documentation.
+
 ## Use in Claude Code
 
 To use these skills in Claude Code:
