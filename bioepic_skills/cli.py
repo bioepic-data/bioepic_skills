@@ -465,7 +465,7 @@ def essdive_search(
     keyword: Optional[str] = typer.Option(
         None,
         "--keyword", "-k",
-        help="Keyword to search for (maps to API keyword parameter)."
+        help="Search text (maps to API text parameter)."
     ),
     provider_name: Optional[str] = typer.Option(
         None,

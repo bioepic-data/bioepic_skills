@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bioepic_skills"
-version = "0.2.3"
+version = "0.2.4"
 description = "A Python library for grounding environmental research terms to ontologies, especially BERVO, using the Ontology Access Kit"
 authors = [
     { name = "Harry Caufield", email = "j.harry.caufield@gmail.com" },

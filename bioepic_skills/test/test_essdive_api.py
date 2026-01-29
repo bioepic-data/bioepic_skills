@@ -25,7 +25,7 @@ def test_search_essdive_packages_builds_query_and_headers():
         qs = parse.parse_qs(parsed.query)
 
         assert parsed.path.endswith("/packages")
-        assert qs["keyword"] == ["soil"]
+        assert qs["text"] == ["soil"]
         assert qs["providerName"] == ["Project A"]
         assert qs["page_size"] == ["10"]
         assert qs["row_start"] == ["5"]
@@ -34,6 +34,9 @@ def test_search_essdive_packages_builds_query_and_headers():
         headers = dict(req.header_items())
         assert headers.get("Authorization") == "Bearer test-token"
         assert headers.get("Accept") == "application/json"
+        assert headers.get("User-Agent") is not None
+        assert headers.get("Content-Type") == "application/json"
+        assert headers.get("Range") == "bytes=0-1000"
 
         return DummyResponse(b'{"ok": true}')
 

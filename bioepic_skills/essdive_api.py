@@ -13,6 +13,11 @@ from urllib import error, parse, request
 
 DEFAULT_ESSDIVE_BASE_URL = "https://api.ess-dive.lbl.gov/"
 DEFAULT_TIMEOUT_SECONDS = 30
+USER_HEADERS = {
+    "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0",
+    "content-type": "application/json",
+    "Range": "bytes=0-1000",
+}
 
 
 class EssdiveApiError(RuntimeError):
@@ -48,7 +53,12 @@ def essdive_api_get(
     Perform a GET request to the ESS-DIVE API and return parsed JSON.
     """
     url = _build_url(base_url, path, params)
-    headers = {"Accept": "application/json"}
+    headers = {
+        "Accept": "application/json",
+        "User-Agent": USER_HEADERS["user_agent"],
+        "Content-Type": USER_HEADERS["content-type"],
+        "Range": USER_HEADERS["Range"],
+    }
 
     resolved_token = _resolve_token(token)
     if resolved_token:
@@ -99,7 +109,7 @@ def search_essdive_packages(
     params: dict[str, Any] = {}
 
     if keyword:
-        params["keyword"] = keyword
+        params["text"] = keyword
     if provider_name:
         params["providerName"] = provider_name
     if page_size is not None:

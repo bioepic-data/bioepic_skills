@@ -35,6 +35,18 @@ python skills/essdive-search/scripts/essdive_search.py search --keyword "snow de
 python skills/essdive-search/scripts/essdive_search.py dataset 7a9f0b1f-1234-5678-9abc-def012345678 --output dataset.json
 ```
 
+Print the resolved URL for debugging:
+
+```bash
+python skills/essdive-search/scripts/essdive_search.py search --keyword "snow depth" --page-size 5 --debug-url
+```
+
+Use a token file (to avoid putting the token in shell history):
+
+```bash
+python skills/essdive-search/scripts/essdive_search.py --token-file /path/to/token.txt search --keyword "snow"
+```
+
 Notes:
 - `--page-size` and `--row-start` must be >= 0.
 
@@ -44,7 +56,10 @@ Search by keyword:
 
 ```bash
 curl -sG \"https://api.ess-dive.lbl.gov/packages\" \\
-  --data-urlencode \"keyword=snow depth\" \\
+  -H \"User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0\" \\
+  -H \"Content-Type: application/json\" \\
+  -H \"Range: bytes=0-1000\" \\
+  --data-urlencode \"text=snow depth\" \\
   --data-urlencode \"page_size=5\" \\
   --data-urlencode \"row_start=0\" \\
   --data-urlencode \"isPublic=true\"
@@ -54,6 +69,9 @@ Fetch a dataset by package ID:
 
 ```bash
 curl -sG \"https://api.ess-dive.lbl.gov/packages/REPLACE_WITH_PACKAGE_ID\" \\
+  -H \"User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0\" \\
+  -H \"Content-Type: application/json\" \\
+  -H \"Range: bytes=0-1000\" \\
   --data-urlencode \"isPublic=true\"
 ```
 
@@ -62,7 +80,10 @@ Authenticated (private) access:
 ```bash
 curl -sG \"https://api.ess-dive.lbl.gov/packages\" \\
   -H \"Authorization: Bearer $ESSDIVE_TOKEN\" \\
-  --data-urlencode \"keyword=snow depth\" \\
+  -H \"User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0\" \\
+  -H \"Content-Type: application/json\" \\
+  -H \"Range: bytes=0-1000\" \\
+  --data-urlencode \"text=snow depth\" \\
   --data-urlencode \"isPublic=false\"
 ```
 
@@ -72,14 +93,22 @@ curl -sG \"https://api.ess-dive.lbl.gov/packages\" \\
 from urllib import parse, request
 
 params = {
-    \"keyword\": \"snow depth\",
+    \"text\": \"snow depth\",
     \"page_size\": 5,
     \"row_start\": 0,
     \"isPublic\": \"true\",
 }
 
 url = \"https://api.ess-dive.lbl.gov/packages?\" + parse.urlencode(params)
-req = request.Request(url, headers={\"Accept\": \"application/json\"})
+req = request.Request(
+    url,
+    headers={
+        \"Accept\": \"application/json\",
+        \"User-Agent\": \"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0\",
+        \"Content-Type\": \"application/json\",
+        \"Range\": \"bytes=0-1000\",
+    },
+)
 
 with request.urlopen(req, timeout=30) as resp:
     print(resp.read().decode(\"utf-8\"))
