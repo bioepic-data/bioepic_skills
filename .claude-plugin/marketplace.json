@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Skills for grounding environmental and biological research terms to ontologies and extracting variables from ESS-DIVE",
-    "version": "0.2.3"
+    "version": "0.2.4"
   },
   "plugins": [
     {
