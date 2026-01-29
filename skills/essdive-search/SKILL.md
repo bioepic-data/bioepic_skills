@@ -10,6 +10,81 @@ description: Skills for searching ESS-DIVE datasets via the Dataset API
 
 ## Full details
 
+## Fallback (No CLI Required)
+
+If the `bioepic` CLI is not installed, use the ESS-DIVE API directly with curl or
+Python's standard library (no third-party packages required).
+
+Alternatively, use the bundled script:
+
+```bash
+python skills/essdive-search/scripts/essdive_search.py search --keyword "snow depth" --page-size 5
+```
+
+```bash
+python skills/essdive-search/scripts/essdive_search.py dataset 7a9f0b1f-1234-5678-9abc-def012345678
+```
+
+Save output to a file:
+
+```bash
+python skills/essdive-search/scripts/essdive_search.py search --keyword "snow depth" --page-size 5 --output results.json
+```
+
+```bash
+python skills/essdive-search/scripts/essdive_search.py dataset 7a9f0b1f-1234-5678-9abc-def012345678 --output dataset.json
+```
+
+Notes:
+- `--page-size` and `--row-start` must be >= 0.
+
+### curl examples
+
+Search by keyword:
+
+```bash
+curl -sG \"https://api.ess-dive.lbl.gov/packages\" \\
+  --data-urlencode \"keyword=snow depth\" \\
+  --data-urlencode \"page_size=5\" \\
+  --data-urlencode \"row_start=0\" \\
+  --data-urlencode \"isPublic=true\"
+```
+
+Fetch a dataset by package ID:
+
+```bash
+curl -sG \"https://api.ess-dive.lbl.gov/packages/REPLACE_WITH_PACKAGE_ID\" \\
+  --data-urlencode \"isPublic=true\"
+```
+
+Authenticated (private) access:
+
+```bash
+curl -sG \"https://api.ess-dive.lbl.gov/packages\" \\
+  -H \"Authorization: Bearer $ESSDIVE_TOKEN\" \\
+  --data-urlencode \"keyword=snow depth\" \\
+  --data-urlencode \"isPublic=false\"
+```
+
+### Python stdlib example
+
+```python
+from urllib import parse, request
+
+params = {
+    \"keyword\": \"snow depth\",
+    \"page_size\": 5,
+    \"row_start\": 0,
+    \"isPublic\": \"true\",
+}
+
+url = \"https://api.ess-dive.lbl.gov/packages?\" + parse.urlencode(params)
+req = request.Request(url, headers={\"Accept\": \"application/json\"})
+
+with request.urlopen(req, timeout=30) as resp:
+    print(resp.read().decode(\"utf-8\"))
+```
+
 ### ESS-DIVE Dataset Search
 
 Usage: `bioepic essdive-search [OPTIONS]`
