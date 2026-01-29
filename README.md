@@ -1,8 +1,10 @@
 # bioepic_skills
 
-A Python library for:
+Primarily a collection of skills for agentic frameworks (e.g., Claude Code), with a supporting Python library for:
 1. **Ontology Grounding**: Ground terms to ontologies, especially **BERVO** (Biological and Environmental Research Variable Ontology), using the **Ontology Access Kit (OAK)**
 2. **ESS-DIVE Data Extraction**: Extract and process variable names from ESS-DIVE datasets using **trowel**
+3. **ESS-DIVE Search**: Search and fetch datasets via the ESS-DIVE API
+4. **TRY Discovery**: Discover TRY datasets, traits, and species lists (CLI-free helpers)
 
 ## Features
 
@@ -18,12 +20,57 @@ A Python library for:
 - 🔬 **Extract** variable names from data files (CSV, TSV, Excel, XML)
 - 📚 **Process** data dictionaries with definitions and units
 - 🔗 **Match** extracted terms against reference lists
-- 🔎 **Search** ESS-DIVE datasets via the API
-- 📄 **Fetch** a single ESS-DIVE dataset record
-- ⚡ **Parallel processing** for large datasets
+- 🔎 **Search** ESS-DIVE datasets via the API (keyword/provider/parameters)
+- 📄 **Fetch** a single ESS-DIVE dataset record by package ID
 - 🎯 Built on [trowel](https://github.com/bioepic-data/trowel)
 
+### TRY Database Discovery
+- 🔎 **Search** TRY dataset listings by keyword (no public API)
+- 📋 **Access** the full TRY trait list (HTML → JSON/TSV helpers)
+- 🧬 **Access** the full TRY species list with annotations (TXT → JSON/TSV helpers)
+
+
 ## Installation
+
+### Install Skills in Claude Code
+
+Use Claude Code's Skills commands to install this repo's marketplace and skills.
+
+```bash
+/plugin marketplace add bioepic-data/bioepic_skills
+/plugin install essdive-extraction@bioepic-skills
+/plugin install essdive-search@bioepic-skills
+/plugin install try-skills@bioepic-skills
+/plugin install ontology-grounding@bioepic-skills
+```
+
+See the official Claude Code Skills docs:
+
+```text
+https://code.claude.com/docs/en/skills
+```
+
+### Use Skills in OpenAI Codex
+
+Codex loads skills from repo and user skill directories. This repo already includes symlinks under `.codex/skills` pointing at the skill folders, so no extra setup is required beyond restarting Codex.
+
+```bash
+mkdir -p .codex/skills
+ln -sfn "$PWD/skills/ontology-grounding" .codex/skills/ontology-grounding
+ln -sfn "$PWD/skills/essdive-extraction" .codex/skills/essdive-extraction
+ln -sfn "$PWD/skills/essdive-search" .codex/skills/essdive-search
+ln -sfn "$PWD/skills/try-skills" .codex/skills/try-skills
+```
+
+User-scoped install is also supported via `~/.codex/skills`.
+
+Codex Skills documentation:
+
+```text
+https://developers.openai.com/codex/skills/
+```
+
+### Local Installation (for development)
 
 Install using pip:
 
@@ -80,6 +127,27 @@ bioepic essdive-dataset 7a9f0b1f-1234-5678-9abc-def012345678
 
 # Match extracted variables against BERVO terms
 bioepic match-terms variable_names.tsv bervo_terms.txt --fuzzy
+```
+
+**TRY Skills (CLI-free helpers):**
+```bash
+# Download TRY datasets page (use --insecure if certificate checks fail)
+python skills/try-skills/scripts/try_download_and_search.py --page datasets --save try_datasets.html
+python skills/try-skills/scripts/try_download_and_search.py --page datasets --save try_datasets.html --insecure
+
+# Convert datasets page to detailed JSON/TSV
+python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --format json --output try_datasets_detailed.json
+python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --format tsv --output try_datasets_detailed.tsv
+
+# Download and convert TRY trait list
+python skills/try-skills/scripts/try_download_and_search.py --page traits --save try_traits.html
+python skills/try-skills/scripts/try_download_and_search.py --page traits --save try_traits.html --insecure
+python skills/try-skills/scripts/try_traits_to_json.py try_traits.html --format tsv --output try_traits.tsv
+
+# Download and convert TRY species list
+python skills/try-skills/scripts/try_download_and_search.py --page species --save TryAccSpecies.txt
+python skills/try-skills/scripts/try_download_and_search.py --page species --save TryAccSpecies.txt --insecure
+python skills/try-skills/scripts/try_species_to_json.py TryAccSpecies.txt --format json --output try_species.json
 ```
 
 ### Python API
@@ -174,11 +242,12 @@ just docs
 
 ## Skills
 
-This repository includes agent skills for Claude Code and similar tools:
+This repository includes agent skills for Claude Code and similar tools. These skills are the primary product of this repo; the Python library and CLI utilities exist to make those skills executable and reusable:
 
 - `ontology-grounding` for ontology lookup and grounding
 - `essdive-extraction` for ESS-DIVE metadata/variable extraction and term matching
-- `essdive-search` for ESS-DIVE Dataset API search and dataset fetch
+- `essdive-search` for ESS-DIVE Dataset API search and dataset fetch (plus CLI-free fallbacks)
+- `try-skills` for TRY dataset discovery, trait list access, and species coverage checks
 
 See `skills/README.md` for details.
 
