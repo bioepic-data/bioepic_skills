@@ -11,10 +11,7 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from bioepic_skills.try_parser import (
-    parse_try_dataset_entries_html,
-    parse_try_datasets_html_with_header,
-)
+from bioepic_skills.try_parser import parse_try_dataset_entries_html
 
 
 def _write_json(records, output_path: Path | None) -> None:
@@ -64,15 +61,26 @@ def main() -> int:
         help="Write output to file (defaults to stdout)",
     )
     parser.add_argument(
-        "--detailed",
+        "--summary",
         action="store_true",
-        help="Parse detailed dataset entries (includes field list)",
+        help="Emit summary fields only (title, archive id, doi, description)",
     )
 
     args = parser.parse_args()
     html_text = Path(args.html_path).read_text(encoding="utf-8")
-    if args.detailed:
-        entries = parse_try_dataset_entries_html(html_text)
+    entries = parse_try_dataset_entries_html(html_text)
+    if args.summary:
+        records = [
+            {
+                "title": entry.title,
+                "try_file_archive_id": entry.try_file_archive_id,
+                "doi": entry.doi,
+                "description": entry.description,
+            }
+            for entry in entries
+        ]
+        header = ["title", "try_file_archive_id", "doi", "description"]
+    else:
         records = [
             {
                 **{k: v for k, v in entry.__dict__.items() if k != "extra_fields"},
@@ -103,8 +111,6 @@ def main() -> int:
             ]
         else:
             header = []
-    else:
-        header, records = parse_try_datasets_html_with_header(html_text)
 
     output_path = Path(args.output) if args.output else None
     if args.format == "tsv":

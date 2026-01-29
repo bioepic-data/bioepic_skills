@@ -230,7 +230,7 @@ python skills/try-skills/scripts/try_species_to_json.py TryAccSpecies.txt --form
 Note: The species file includes a header row. The helper auto-detects it and outputs
 structured records with counts when present.
 
-Convert TRY dataset list HTML to JSON/TSV (CLI helper):
+Convert TRY dataset list HTML to JSON/TSV (CLI helper, detailed by default):
 
 ```bash
 python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --format json --output try_datasets.json
@@ -240,14 +240,14 @@ python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --for
 python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --format tsv --output try_datasets.tsv
 ```
 
-Use the detailed parser (includes field list and extra fields):
+Use the summary parser (title/id/doi/description only):
 
 ```bash
-python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --detailed --format json --output try_datasets_detailed.json
+python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --summary --format json --output try_datasets_summary.json
 ```
 
 ```bash
-python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --detailed --format tsv --output try_datasets_detailed.tsv
+python skills/try-skills/scripts/try_datasets_to_json.py try_datasets.html --summary --format tsv --output try_datasets_summary.tsv
 ```
 
 Filter datasets by keywords in `field_list` (or other fields):
