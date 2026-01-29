@@ -227,6 +227,9 @@ python skills/try-skills/scripts/try_species_to_json.py TryAccSpecies.txt --form
 python skills/try-skills/scripts/try_species_to_json.py TryAccSpecies.txt --format tsv --output try_species.tsv
 ```
 
+Note: The species file includes a header row. The helper auto-detects it and outputs
+structured records with counts when present.
+
 Convert TRY dataset list HTML to JSON/TSV (CLI helper):
 
 ```bash
