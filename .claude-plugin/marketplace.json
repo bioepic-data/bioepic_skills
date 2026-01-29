@@ -35,6 +35,15 @@
       "skills": [
         "./skills/essdive-search"
       ]
+    },
+    {
+      "name": "try-skills",
+      "description": "Skills for discovering datasets, traits, and species information from the TRY plant trait database",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/try-skills"
+      ]
     }
   ]
 }
