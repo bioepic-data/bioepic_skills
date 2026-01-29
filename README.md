@@ -54,14 +54,6 @@ https://code.claude.com/docs/en/skills
 
 Codex loads skills from repo and user skill directories. This repo already includes symlinks under `.codex/skills` pointing at the skill folders, so no extra setup is required beyond restarting Codex.
 
-```bash
-mkdir -p .codex/skills
-ln -sfn "$PWD/skills/ontology-grounding" .codex/skills/ontology-grounding
-ln -sfn "$PWD/skills/essdive-extraction" .codex/skills/essdive-extraction
-ln -sfn "$PWD/skills/essdive-search" .codex/skills/essdive-search
-ln -sfn "$PWD/skills/try-skills" .codex/skills/try-skills
-```
-
 User-scoped install is also supported via `~/.codex/skills`.
 
 Codex Skills documentation:
