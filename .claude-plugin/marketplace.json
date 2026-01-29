@@ -6,13 +6,13 @@
   },
   "metadata": {
     "description": "Skills for grounding environmental and biological research terms to ontologies and extracting variables from ESS-DIVE",
-    "version": "0.2.0"
+    "version": "0.2.1"
   },
   "plugins": [
     {
       "name": "ontology-grounding",
       "description": "Skills for grounding variable names to ontologies (BERVO, ENVO, ChEBI, etc.)",
-      "source": "./..",
+      "source": "./",
       "strict": false,
       "skills": [
         "./skills/ontology-grounding"
@@ -21,7 +21,7 @@
     {
       "name": "essdive-extraction",
       "description": "Skills for extracting and processing variable names from ESS-DIVE datasets",
-      "source": "./..",
+      "source": "./",
       "strict": false,
       "skills": [
         "./skills/essdive-extraction"
