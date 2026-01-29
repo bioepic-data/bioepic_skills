@@ -21,11 +21,67 @@ Use the TRY datasets list page to locate datasets by keyword (e.g., "snow", "lea
 - Browser search (Ctrl/Cmd+F on the Data.php page)
 - Downloading the page and searching locally with `rg`
 
-Example local search workflow:
+Example local search workflow (curl + rg):
 
 ```bash
 curl -sL "https://www.try-db.org/TryWeb/Data.php" -o try_datasets.html
 rg -ni "snow|pack|alpine|tundra" try_datasets.html
+```
+
+If `rg` is unavailable, use `grep`:
+
+```bash
+curl -sL "https://www.try-db.org/TryWeb/Data.php" -o try_datasets.html
+grep -iE "snow|pack|alpine|tundra" try_datasets.html
+```
+
+If `curl` fails, try `wget`:
+
+```bash
+wget -O try_datasets.html "https://www.try-db.org/TryWeb/Data.php"
+grep -iE "snow|pack|alpine|tundra" try_datasets.html
+```
+
+If certificate validation fails, use:
+
+```bash
+wget -O try_datasets.html "https://www.try-db.org/TryWeb/Data.php" --no-check-certificate
+grep -iE "snow|pack|alpine|tundra" try_datasets.html
+```
+
+If certificate validation fails with curl, use:
+
+```bash
+curl -sL -k "https://www.try-db.org/TryWeb/Data.php" -o try_datasets.html
+grep -iE "snow|pack|alpine|tundra" try_datasets.html
+```
+
+Pure Python fallback (no curl/wget/rg/grep required):
+
+```bash
+python skills/try-skills/scripts/try_download_and_search.py --page datasets --pattern "snow|snowpack"
+```
+
+If certificate validation fails, use:
+
+```bash
+python skills/try-skills/scripts/try_download_and_search.py --page datasets --pattern "snow|snowpack" --insecure
+```
+
+Save the downloaded HTML for later parsing:
+
+```bash
+python skills/try-skills/scripts/try_download_and_search.py --page datasets --pattern "snow|snowpack" --insecure --save try_datasets.html
+```
+
+Download + convert to JSON or TSV in one step:
+
+```bash
+python skills/try-skills/scripts/try_download_and_search.py --page datasets --insecure --convert-datasets --convert-format json --convert-output try_datasets.json
+```
+
+```bash
+python skills/try-skills/scripts/try_download_and_search.py --page datasets --insecure --convert-datasets --convert-format tsv --convert-output try_datasets.tsv
 ```
 
 ### Trait list access
@@ -38,6 +94,46 @@ curl -sL "https://www.try-db.org/TryWeb/Prop023.php" -o try_traits.html
 rg -ni "snow|cold|temperature|alpine" try_traits.html
 ```
 
+If `rg` is unavailable, use `grep`:
+
+```bash
+curl -sL "https://www.try-db.org/TryWeb/Prop023.php" -o try_traits.html
+grep -iE "snow|cold|temperature|alpine" try_traits.html
+```
+
+If `curl` fails, try `wget`:
+
+```bash
+wget -O try_traits.html "https://www.try-db.org/TryWeb/Prop023.php"
+grep -iE "snow|cold|temperature|alpine" try_traits.html
+```
+
+If certificate validation fails, use:
+
+```bash
+wget -O try_traits.html "https://www.try-db.org/TryWeb/Prop023.php" --no-check-certificate
+grep -iE "snow|cold|temperature|alpine" try_traits.html
+```
+
+If certificate validation fails with curl, use:
+
+```bash
+curl -sL -k "https://www.try-db.org/TryWeb/Prop023.php" -o try_traits.html
+grep -iE "snow|cold|temperature|alpine" try_traits.html
+```
+
+Pure Python fallback (no curl/wget/rg/grep required):
+
+```bash
+python skills/try-skills/scripts/try_download_and_search.py --page traits --pattern "snow|cold|temperature|alpine"
+```
+
+If certificate validation fails, use:
+
+```bash
+python skills/try-skills/scripts/try_download_and_search.py --page traits --pattern "snow|cold|temperature|alpine" --insecure
+```
+
 ### Species list access
 
 The species list is a plain text file with one species per line.
@@ -45,6 +141,45 @@ The species list is a plain text file with one species per line.
 ```bash
 curl -sL "https://www.try-db.org/dnld/TryAccSpecies.txt" -o try_species.txt
 rg -ni "abies|picea|pinus" try_species.txt
+```
+
+If `rg` is unavailable, use `grep`:
+
+```bash
+curl -sL "https://www.try-db.org/dnld/TryAccSpecies.txt" -o try_species.txt
+grep -iE "abies|picea|pinus" try_species.txt
+```
+
+If `curl` fails, try `wget`:
+
+```bash
+wget -O try_species.txt "https://www.try-db.org/dnld/TryAccSpecies.txt"
+grep -iE "abies|picea|pinus" try_species.txt
+```
+
+If certificate validation fails, use:
+
+```bash
+wget -O try_species.txt "https://www.try-db.org/dnld/TryAccSpecies.txt" --no-check-certificate
+grep -iE "abies|picea|pinus" try_species.txt
+```
+
+If certificate validation fails with curl, use:
+
+```bash
+curl -sL -k "https://www.try-db.org/dnld/TryAccSpecies.txt" -o try_species.txt
+grep -iE "abies|picea|pinus" try_species.txt
+```
+Pure Python fallback (no curl/wget/rg/grep required):
+
+```bash
+python skills/try-skills/scripts/try_download_and_search.py --page species --pattern "abies|picea|pinus"
+```
+
+If certificate validation fails, use:
+
+```bash
+python skills/try-skills/scripts/try_download_and_search.py --page species --pattern "abies|picea|pinus" --insecure
 ```
 
 ## Notes
