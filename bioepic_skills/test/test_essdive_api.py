@@ -31,13 +31,14 @@ def test_search_essdive_packages_builds_query_and_headers():
         assert qs["row_start"] == ["5"]
         assert qs["isPublic"] == ["true"]
 
-        headers = dict(req.header_items())
-        headers_lower = {key.lower(): value for key, value in headers.items()}
-        assert headers.get("Authorization") == "Bearer test-token"
-        assert headers_lower.get("accept") == "application/json"
-        assert headers_lower.get("user-agent") is not None
-        assert headers_lower.get("content-type") == "application/json"
-        assert headers_lower.get("range") == "bytes=0-1000"
+        # urllib.request.Request normalizes header names to title case
+        # (e.g., "User-Agent" -> "User-agent"), so use case-insensitive lookup.
+        headers = {k.lower(): v for k, v in req.header_items()}
+        assert headers.get("authorization") == "Bearer test-token"
+        assert headers.get("accept") == "application/json"
+        assert headers.get("user-agent") is not None
+        assert headers.get("content-type") == "application/json"
+        assert headers.get("range") == "bytes=0-1000"
 
         return DummyResponse(b'{"ok": true}')
 
