@@ -16,6 +16,25 @@ from oaklib.interfaces import OboGraphInterface
 logger = logging.getLogger(__name__)
 
 
+def _uri_to_curie(uri: str) -> str | None:
+    """Convert a full URI to a CURIE if it matches known patterns.
+
+    Handles URIs like:
+      https://w3id.org/bervo/BERVO_8000100 -> BERVO:8000100
+      http://purl.obolibrary.org/obo/ENVO_00000001 -> ENVO:00000001
+    """
+    import re
+    # w3id.org pattern: https://w3id.org/<ontology>/<PREFIX>_<id>
+    m = re.match(r'https?://w3id\.org/\w+/([A-Z]+)_(\d+)$', uri)
+    if m:
+        return f"{m.group(1)}:{m.group(2)}"
+    # OBO pattern: http://purl.obolibrary.org/obo/<PREFIX>_<id>
+    m = re.match(r'https?://purl\.obolibrary\.org/obo/([A-Z]+)_(\d+)$', uri)
+    if m:
+        return f"{m.group(1)}:{m.group(2)}"
+    return None
+
+
 # Common ontology configurations
 ONTOLOGY_CONFIGS = {
     "bervo": {
@@ -135,10 +154,29 @@ def search_ontology(
             # Use basic_search for simple term matching
             results = []
             for curie in adapter.basic_search(search_term):
-                label = adapter.label(curie)
+                # BioPortal may return full URIs instead of CURIEs.
+                # Try to convert to CURIE and retrieve the label safely.
+                display_id = curie
+                if hasattr(adapter, '_converter'):
+                    compressed = adapter._converter.compress(curie)
+                    if compressed:
+                        display_id = compressed
+                if display_id == curie:
+                    # Converter didn't help; try known URI patterns
+                    converted = _uri_to_curie(curie)
+                    if converted:
+                        display_id = converted
+
+                try:
+                    label = adapter.label(curie)
+                except (TypeError, KeyError, Exception) as e:
+                    logger.debug(f"Could not fetch label for {curie}: {e}")
+                    # Fall back to the label cache if available
+                    label = getattr(adapter, 'label_cache', {}).get(curie)
+
                 # Extract ontology prefix from CURIE
-                ontology_prefix = curie.split(":")[0] if ":" in curie else ontology_id
-                results.append((curie, ontology_prefix, label))
+                ontology_prefix = display_id.split(":")[0] if ":" in display_id else ontology_id
+                results.append((display_id, ontology_prefix, label))
                 if len(results) >= limit:
                     break
             return results
@@ -147,9 +185,20 @@ def search_ontology(
             adapter = get_adapter("ols:")
             results = []
             for curie in adapter.basic_search(search_term):
-                label = adapter.label(curie)
-                ontology_prefix = curie.split(":")[0] if ":" in curie else "unknown"
-                results.append((curie, ontology_prefix, label))
+                display_id = curie
+                if hasattr(adapter, '_converter'):
+                    compressed = adapter._converter.compress(curie)
+                    if compressed:
+                        display_id = compressed
+
+                try:
+                    label = adapter.label(curie)
+                except (TypeError, KeyError, Exception) as e:
+                    logger.debug(f"Could not fetch label for {curie}: {e}")
+                    label = getattr(adapter, 'label_cache', {}).get(curie)
+
+                ontology_prefix = display_id.split(":")[0] if ":" in display_id else "unknown"
+                results.append((display_id, ontology_prefix, label))
                 if len(results) >= limit:
                     break
             return results
