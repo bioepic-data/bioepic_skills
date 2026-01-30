@@ -33,6 +33,19 @@ class FredDataSourceRecord:
     doi: Optional[str]
 
 
+def _strip_trailing_period(value: str) -> str:
+    trimmed = value.rstrip()
+    # Remove trailing punctuation (periods/commas/semicolons) and whitespace.
+    trimmed = re.sub(r"[\s\.,;]+$", "", trimmed)
+    return trimmed.strip()
+
+
+def _remove_doi_from_citation(citation: str, doi: Optional[str]) -> str:
+    if not doi:
+        return citation
+    return citation.replace(doi, "").strip()
+
+
 class _HtmlTablesParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
@@ -191,6 +204,10 @@ def parse_fred_data_sources_html(html_text: str) -> list[FredDataSourceRecord]:
             citation = row_map.get("citation", "")
             doi_match = re.search(r"https?://doi\.org/\S+", citation)
             doi = doi_match.group(0) if doi_match else row_map.get("doi") or None
+            if doi:
+                doi = _strip_trailing_period(doi)
+            citation = _remove_doi_from_citation(citation, doi)
+            citation = _strip_trailing_period(citation)
             records.append(
                 FredDataSourceRecord(
                     year=_to_int(row_map.get("year")),
@@ -215,10 +232,14 @@ def parse_fred_data_sources_html(html_text: str) -> list[FredDataSourceRecord]:
             continue
         doi_match = re.search(r"https?://doi\.org/\S+", line)
         doi = doi_match.group(0) if doi_match else None
+        if doi:
+            doi = _strip_trailing_period(doi)
+        citation = _remove_doi_from_citation(line.strip(), doi)
+        citation = _strip_trailing_period(citation)
         records.append(
             FredDataSourceRecord(
                 year=current_year,
-                citation=line.strip(),
+                citation=citation,
                 doi=doi,
             )
         )

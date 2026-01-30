@@ -47,11 +47,11 @@ def test_parse_fred_data_sources_html():
     html = """
     <table>
       <tr><th>Year</th><th>Citation</th><th>DOI</th></tr>
-      <tr><td>2020</td><td>Smith J. Example study. https://doi.org/10.1000/example</td><td></td></tr>
+      <tr><td>2020</td><td>Smith J. Example study. https://doi.org/10.1000/example.</td><td></td></tr>
     </table>
     """
     records = parse_fred_data_sources_html(html)
     assert len(records) == 1
     assert records[0].year == 2020
-    assert "Smith J." in records[0].citation
+    assert records[0].citation == "Smith J. Example study"
     assert records[0].doi == "https://doi.org/10.1000/example"
