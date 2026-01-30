@@ -12,10 +12,10 @@ from bioepic_skills.ontology_grounding import (
 def test_list_ontologies():
     """Test that list_ontologies returns the expected structure."""
     ontologies = list_ontologies()
-    
+
     assert isinstance(ontologies, list)
     assert len(ontologies) > 0
-    
+
     # Check first ontology has required fields
     ont = ontologies[0]
     assert "id" in ont
@@ -29,13 +29,13 @@ def test_ontology_configs():
     assert "bervo" in ONTOLOGY_CONFIGS
     assert "envo" in ONTOLOGY_CONFIGS
     assert "chebi" in ONTOLOGY_CONFIGS
-    
+
     # Check BERVO configuration
     bervo = ONTOLOGY_CONFIGS["bervo"]
     assert bervo["selector"] == "bioportal:BERVO"
     assert "Biological" in bervo["name"]
     assert "Environmental" in bervo["name"]
-    
+
 
 def test_bervo_is_first():
     """Test that BERVO is prominently featured."""
