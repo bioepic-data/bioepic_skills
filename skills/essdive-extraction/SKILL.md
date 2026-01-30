@@ -144,6 +144,9 @@ Examples:
     # Save to specific output file
     bioepic match-terms vars.tsv refs.txt --output matched.tsv
 
+Default output (if --output is omitted):
+    <terms_file_stem>_matched.tsv in the same directory as the terms file
+
 ╭─ Arguments ────────────────────────────────────────────────────────────────────╮
 │ *    terms_file      PATH  TSV file with terms in first column [required]     │
 │ *    list_file       PATH  Text file with terms, one per line [required]      │

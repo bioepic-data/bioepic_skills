@@ -7,6 +7,7 @@ making them available as agent-compatible functions.
 
 import os
 import subprocess
+from pathlib import Path
 from typing import Optional
 
 
@@ -40,7 +41,8 @@ def get_essdive_metadata(doi_file: str, output_dir: str = ".") -> dict[str, str]
     if not os.path.exists(output_dir):
         raise FileNotFoundError(f"Output directory not found: {output_dir}")
 
-    cmd = ["trowel", "get-essdive-metadata", "--path", doi_file, "--outpath", output_dir]
+    cmd = ["trowel", "get-essdive-metadata",
+           "--path", doi_file, "--outpath", output_dir]
 
     result = subprocess.run(cmd, capture_output=True, text=True)
 
@@ -80,7 +82,8 @@ def get_essdive_variables(
     if not os.path.exists(output_dir):
         raise FileNotFoundError(f"Output directory not found: {output_dir}")
 
-    cmd = ["trowel", "get-essdive-variables", "--outpath", output_dir, "--workers", str(workers)]
+    cmd = ["trowel", "get-essdive-variables", "--outpath",
+           output_dir, "--workers", str(workers)]
 
     if filetable_path:
         if not os.path.exists(filetable_path):
@@ -135,7 +138,13 @@ def match_term_lists(
     ]
 
     if output:
-        cmd.extend(["--output", output])
+        output_path = output
+    else:
+        terms_path = Path(terms_file)
+        output_path = str(terms_path.with_name(
+            f"{terms_path.stem}_matched.tsv"))
+
+    cmd.extend(["--output", output_path])
 
     if fuzzy:
         cmd.append("--fuzzy")
@@ -146,13 +155,4 @@ def match_term_lists(
     if result.returncode != 0:
         raise RuntimeError(f"trowel command failed: {result.stderr}")
 
-    # Parse output to get the result file path
-    if output:
-        return output
-    else:
-        # Extract the output path from the command output
-        for line in result.stdout.split("\n"):
-            if "Matched terms written to" in line:
-                return line.split("Matched terms written to")[-1].strip()
-
-        raise RuntimeError("Could not determine output file path")
+    return output_path
