@@ -7,6 +7,7 @@ and grounding text terms to ontology concepts, with special support for BERVO
 (Biofuel and Biobased Ecomanufacturing Research Vocabulary Ontology).
 """
 import logging
+import re
 from typing import Optional
 import urllib.error
 
@@ -23,13 +24,12 @@ def _uri_to_curie(uri: str) -> str | None:
       https://w3id.org/bervo/BERVO_8000100 -> BERVO:8000100
       http://purl.obolibrary.org/obo/ENVO_00000001 -> ENVO:00000001
     """
-    import re
     # w3id.org pattern: https://w3id.org/<ontology>/<PREFIX>_<id>
-    m = re.match(r'https?://w3id\.org/\w+/([A-Z]+)_(\d+)$', uri)
+    m = re.match(r'https?://w3id\.org/\w+/([A-Za-z]+)_([A-Za-z0-9]+)$', uri)
     if m:
         return f"{m.group(1)}:{m.group(2)}"
     # OBO pattern: http://purl.obolibrary.org/obo/<PREFIX>_<id>
-    m = re.match(r'https?://purl\.obolibrary\.org/obo/([A-Z]+)_(\d+)$', uri)
+    m = re.match(r'https?://purl\.obolibrary\.org/obo/([A-Za-z]+)_([A-Za-z0-9]+)$', uri)
     if m:
         return f"{m.group(1)}:{m.group(2)}"
     return None
@@ -169,10 +169,12 @@ def search_ontology(
 
                 try:
                     label = adapter.label(curie)
-                except (TypeError, KeyError, Exception) as e:
+                except Exception as e:
                     logger.debug(f"Could not fetch label for {curie}: {e}")
                     # Fall back to the label cache if available
                     label = getattr(adapter, 'label_cache', {}).get(curie)
+                if label is None:
+                    label = display_id
 
                 # Extract ontology prefix from CURIE
                 ontology_prefix = display_id.split(":")[0] if ":" in display_id else ontology_id
@@ -190,12 +192,18 @@ def search_ontology(
                     compressed = adapter._converter.compress(curie)
                     if compressed:
                         display_id = compressed
+                if display_id == curie:
+                    converted = _uri_to_curie(curie)
+                    if converted:
+                        display_id = converted
 
                 try:
                     label = adapter.label(curie)
-                except (TypeError, KeyError, Exception) as e:
+                except Exception as e:
                     logger.debug(f"Could not fetch label for {curie}: {e}")
                     label = getattr(adapter, 'label_cache', {}).get(curie)
+                if label is None:
+                    label = display_id
 
                 ontology_prefix = display_id.split(":")[0] if ":" in display_id else "unknown"
                 results.append((display_id, ontology_prefix, label))
