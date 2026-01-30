@@ -75,6 +75,22 @@ Skills for discovering datasets, traits, and species information from the TRY pl
 
 See [try-skills/SKILL.md](./try-skills/SKILL.md) for full documentation.
 
+### fred-skills
+
+Skills for discovering traits, species, and data sources in the Fine-Root Ecology Database (FRED).
+
+**Key capabilities:**
+- Parse the FRED trait inventory (HTML → JSON/TSV)
+- Parse the FRED species list (HTML → JSON/TSV)
+- Download and parse FRED data sources (best-effort pagination)
+
+**Use cases:**
+- Trait and species coverage checks
+- Data source discovery
+- Local search over FRED metadata
+
+See [fred-skills/SKILL.md](./fred-skills/SKILL.md) for full documentation.
+
 ## Use in Claude Code
 
 To use these skills in Claude Code:

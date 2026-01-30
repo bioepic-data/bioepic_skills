@@ -44,6 +44,15 @@
       "skills": [
         "./skills/try-skills"
       ]
+    },
+    {
+      "name": "fred-skills",
+      "description": "Skills for discovering traits, species, and data sources in the Fine-Root Ecology Database (FRED)",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/fred-skills"
+      ]
     }
   ]
 }
