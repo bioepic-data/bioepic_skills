@@ -29,7 +29,8 @@ def _uri_to_curie(uri: str) -> str | None:
     if m:
         return f"{m.group(1)}:{m.group(2)}"
     # OBO pattern: http://purl.obolibrary.org/obo/<PREFIX>_<id>
-    m = re.match(r'https?://purl\.obolibrary\.org/obo/([A-Za-z]+)_([A-Za-z0-9]+)$', uri)
+    m = re.match(
+        r'https?://purl\.obolibrary\.org/obo/([A-Za-z]+)_([A-Za-z0-9]+)$', uri)
     if m:
         return f"{m.group(1)}:{m.group(2)}"
     return None
@@ -78,18 +79,18 @@ ONTOLOGY_CONFIGS = {
 def get_ontology_adapter(ontology_id: str) -> Optional[OboGraphInterface]:
     """
     Get an OAK adapter for the specified ontology.
-    
+
     Parameters
     ----------
     ontology_id : str
         Ontology identifier (e.g., 'bervo', 'envo', 'chebi')
         Can also be a full selector string (e.g., 'sqlite:obo:envo')
-        
+
     Returns
     -------
     OboGraphInterface or None
         OAK adapter instance, or None if unavailable
-        
+
     Examples
     --------
     >>> adapter = get_ontology_adapter("envo")  # doctest: +SKIP
@@ -101,7 +102,7 @@ def get_ontology_adapter(ontology_id: str) -> Optional[OboGraphInterface]:
     else:
         # Assume it's a direct selector string
         selector = ontology_id
-    
+
     try:
         adapter = get_adapter(selector)
         return adapter
@@ -117,10 +118,10 @@ def search_ontology(
 ) -> list[tuple[str, str, str]]:
     """
     Search for ontology terms.
-    
+
     The search_term should be a plain text term that is matched against
     ontology term labels, synonyms, and other text metadata.
-    
+
     Parameters
     ----------
     search_term : str
@@ -130,18 +131,18 @@ def search_ontology(
         If None, searches OLS across multiple ontologies
     limit : int
         Maximum number of results to return (default: 10)
-        
+
     Returns
     -------
     list[tuple[str, str, str]]
         List of tuples containing (term_id, ontology_id, label)
-        
+
     Examples
     --------
     >>> results = search_ontology("soil pH", "bervo")  # doctest: +SKIP
     >>> for term_id, ont_id, label in results:  # doctest: +SKIP
     ...     print(f"{term_id} [{ont_id}] {label}")
-    
+
     >>> results = search_ontology("temperature")  # Search all ontologies  # doctest: +SKIP
     """
     try:
@@ -150,7 +151,7 @@ def search_ontology(
             adapter = get_ontology_adapter(ontology_id)
             if adapter is None:
                 return []
-            
+
             # Use basic_search for simple term matching
             results = []
             for curie in adapter.basic_search(search_term):
@@ -177,7 +178,8 @@ def search_ontology(
                     label = display_id or "Unknown"
 
                 # Extract ontology prefix from CURIE
-                ontology_prefix = display_id.split(":")[0] if ":" in display_id else ontology_id
+                ontology_prefix = display_id.split(
+                    ":")[0] if ":" in display_id else ontology_id
                 results.append((display_id, ontology_prefix, label))
                 if len(results) >= limit:
                     break
@@ -205,12 +207,13 @@ def search_ontology(
                 if not label:
                     label = display_id or "Unknown"
 
-                ontology_prefix = display_id.split(":")[0] if ":" in display_id else "unknown"
+                ontology_prefix = display_id.split(
+                    ":")[0] if ":" in display_id else "unknown"
                 results.append((display_id, ontology_prefix, label))
                 if len(results) >= limit:
                     break
             return results
-            
+
     except (ValueError, urllib.error.URLError, NotImplementedError) as e:
         logger.error(f"Search failed for '{search_term}': {e}")
         return []
@@ -219,7 +222,7 @@ def search_ontology(
 def get_term_details(term_id: str, ontology_id: str | None = None) -> dict:
     """
     Get detailed information about a specific ontology term.
-    
+
     Parameters
     ----------
     term_id : str
@@ -227,13 +230,13 @@ def get_term_details(term_id: str, ontology_id: str | None = None) -> dict:
     ontology_id : str or None
         Ontology identifier (e.g., 'bervo', 'envo')
         If None, attempts to infer from term_id prefix
-        
+
     Returns
     -------
     dict
         Dictionary with keys: term_id, label, definition, synonyms, ontology_id
         Returns dict with 'error' key if term not found
-        
+
     Examples
     --------
     >>> details = get_term_details("ENVO:00000001", "envo")  # doctest: +SKIP
@@ -245,21 +248,21 @@ def get_term_details(term_id: str, ontology_id: str | None = None) -> dict:
         if ontology_id is None and ":" in term_id:
             ontology_prefix = term_id.split(":")[0].lower()
             ontology_id = ontology_prefix
-        
+
         if ontology_id is None:
             return {"error": "Cannot determine ontology for term"}
-        
+
         adapter = get_ontology_adapter(ontology_id)
         if adapter is None:
             return {"error": f"Cannot access ontology: {ontology_id}"}
-        
+
         # Get basic information
         label = adapter.label(term_id)
         if label is None:
             return {"error": f"Term '{term_id}' not found or does not exist"}
-        
+
         definition = adapter.definition(term_id)
-        
+
         # Get synonyms
         synonyms = []
         try:
@@ -267,7 +270,7 @@ def get_term_details(term_id: str, ontology_id: str | None = None) -> dict:
         except (NotImplementedError, AttributeError):
             # Some adapters don't support aliases
             pass
-        
+
         # Get relationships
         relationships = {}
         try:
@@ -283,9 +286,10 @@ def get_term_details(term_id: str, ontology_id: str | None = None) -> dict:
                 ]
         except (NotImplementedError, AttributeError):
             pass
-        
-        ontology_prefix = term_id.split(":")[0] if ":" in term_id else "unknown"
-        
+
+        ontology_prefix = term_id.split(
+            ":")[0] if ":" in term_id else "unknown"
+
         return {
             "term_id": term_id,
             "label": label,
@@ -294,7 +298,7 @@ def get_term_details(term_id: str, ontology_id: str | None = None) -> dict:
             "relationships": relationships,
             "ontology_id": ontology_prefix,
         }
-        
+
     except (ValueError, urllib.error.URLError) as e:
         logger.error(f"Unable to get term details for '{term_id}': {e}")
         return {"error": str(e)}
@@ -308,10 +312,10 @@ def ground_terms(
 ) -> dict[str, list[dict]]:
     """
     Ground multiple text terms to ontology concepts.
-    
+
     This function searches for ontology terms matching the input text
     and returns the best matches with confidence scores.
-    
+
     Parameters
     ----------
     text_terms : list[str]
@@ -323,13 +327,13 @@ def ground_terms(
         Minimum confidence threshold (0.0-1.0)
     limit_per_term : int
         Maximum matches per term (default: 3)
-        
+
     Returns
     -------
     dict[str, list[dict]]
         Dictionary mapping each input term to list of matches
         Each match contains: term_id, label, confidence, ontology_id
-        
+
     Examples
     --------
     >>> terms = ["soil moisture", "air temperature", "precipitation"]  # doctest: +SKIP
@@ -340,24 +344,25 @@ def ground_terms(
     ...         print(f"  {match['term_id']}: {match['label']} ({match['confidence']})")
     """
     results = {}
-    
+
     for text_term in text_terms:
         matches = []
-        search_results = search_ontology(text_term, ontology_id, limit=limit_per_term * 2)
-        
+        search_results = search_ontology(
+            text_term, ontology_id, limit=limit_per_term * 2)
+
         for term_id, ont_id, label in search_results:
             # Calculate simple confidence based on text similarity
             # Exact match = 1.0, contains = 0.9, found = 0.7
             text_lower = text_term.lower()
             label_lower = label.lower() if label else ""
-            
+
             if text_lower == label_lower:
                 confidence = 1.0
             elif text_lower in label_lower or label_lower in text_lower:
                 confidence = 0.9
             else:
                 confidence = 0.7
-            
+
             if confidence >= threshold:
                 matches.append({
                     "term_id": term_id,
@@ -365,24 +370,24 @@ def ground_terms(
                     "confidence": confidence,
                     "ontology_id": ont_id,
                 })
-            
+
             if len(matches) >= limit_per_term:
                 break
-        
+
         results[text_term] = matches
-    
+
     return results
 
 
 def list_ontologies() -> list[dict]:
     """
     List available ontologies with their configurations.
-    
+
     Returns
     -------
     list[dict]
         List of dictionaries with ontology information
-        
+
     Examples
     --------
     >>> ontologies = list_ontologies()  # doctest: +SKIP

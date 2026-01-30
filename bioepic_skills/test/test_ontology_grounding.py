@@ -67,6 +67,27 @@ def test_search_ontology_label_fallback(monkeypatch):
     assert results[0][2] in {"CURIE:1", "Unknown"}
 
 
+def test_search_ontology_ols_uri_conversion(monkeypatch):
+    class DummyAdapter:
+        def basic_search(self, _term):
+            return ["http://purl.obolibrary.org/obo/ENVO_00000001"]
+
+        def label(self, _curie):
+            return "dummy label"
+
+    def fake_get_adapter(_selector):
+        return DummyAdapter()
+
+    monkeypatch.setattr(
+        "bioepic_skills.ontology_grounding.get_adapter",
+        fake_get_adapter,
+    )
+
+    results = search_ontology("soil", ontology_id=None, limit=1)
+    assert results
+    assert results[0][0].startswith("ENVO:")
+
+
 # Note: Integration tests that actually call OAK adapters would require
 # network access and are better run separately. Examples:
 #
