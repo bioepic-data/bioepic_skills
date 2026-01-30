@@ -5,6 +5,7 @@ Tests for ontology grounding functionality.
 from bioepic_skills.ontology_grounding import (
     list_ontologies,
     ONTOLOGY_CONFIGS,
+    search_ontology,
 )
 
 
@@ -41,6 +42,29 @@ def test_bervo_is_first():
     ontologies = list_ontologies()
     ont_ids = [ont["id"] for ont in ontologies]
     assert "bervo" in ont_ids
+
+
+def test_search_ontology_label_fallback(monkeypatch):
+    class DummyAdapter:
+        label_cache = {}
+
+        def basic_search(self, _term):
+            return ["CURIE:1"]
+
+        def label(self, _curie):
+            return None
+
+    def fake_get_ontology_adapter(_ontology_id):
+        return DummyAdapter()
+
+    monkeypatch.setattr(
+        "bioepic_skills.ontology_grounding.get_ontology_adapter",
+        fake_get_ontology_adapter,
+    )
+
+    results = search_ontology("soil", ontology_id="bervo", limit=1)
+    assert results
+    assert results[0][2] in {"CURIE:1", "Unknown"}
 
 
 # Note: Integration tests that actually call OAK adapters would require

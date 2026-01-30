@@ -173,8 +173,8 @@ def search_ontology(
                     logger.debug(f"Could not fetch label for {curie}: {e}")
                     # Fall back to the label cache if available
                     label = getattr(adapter, 'label_cache', {}).get(curie)
-                if label is None:
-                    label = display_id
+                if not label:
+                    label = display_id or "Unknown"
 
                 # Extract ontology prefix from CURIE
                 ontology_prefix = display_id.split(":")[0] if ":" in display_id else ontology_id
@@ -202,8 +202,8 @@ def search_ontology(
                 except Exception as e:
                     logger.debug(f"Could not fetch label for {curie}: {e}")
                     label = getattr(adapter, 'label_cache', {}).get(curie)
-                if label is None:
-                    label = display_id
+                if not label:
+                    label = display_id or "Unknown"
 
                 ontology_prefix = display_id.split(":")[0] if ":" in display_id else "unknown"
                 results.append((display_id, ontology_prefix, label))
