@@ -64,6 +64,17 @@ def _try_variants(timeout: int, insecure: bool) -> str:
     return best or ""
 
 
+def _fetch_all_pages(timeout: int, insecure: bool, max_pages: int) -> str:
+    pages = []
+    for page in range(max_pages):
+        url = f"{BASE_URL}?page={page}"
+        try:
+            pages.append(_fetch(url, timeout, insecure))
+        except Exception:
+            continue
+    return "\n".join(pages)
+
+
 def _write_json(records, output_path: Path | None) -> None:
     payload = [record.__dict__ for record in records]
     if output_path:
@@ -118,9 +129,20 @@ def main() -> int:
         default=None,
         help="Save fetched HTML to a file",
     )
+    parser.add_argument(
+        "--pages",
+        type=int,
+        default=26,
+        help="Number of paginated pages to fetch (default: 26)",
+    )
 
     args = parser.parse_args()
     html_text = _try_variants(args.timeout, args.insecure)
+    display = parse_display_range(html_text)
+    if display:
+        _start, end, total = display
+        if end < total:
+            html_text = _fetch_all_pages(args.timeout, args.insecure, args.pages)
     if args.save:
         Path(args.save).write_text(html_text, encoding="utf-8")
 

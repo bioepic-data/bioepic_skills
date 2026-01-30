@@ -5,6 +5,7 @@ Primarily a collection of skills for agentic frameworks (e.g., Claude Code), wit
 2. **ESS-DIVE Data Extraction**: Extract and process variable names from ESS-DIVE datasets using **trowel**
 3. **ESS-DIVE Search**: Search and fetch datasets via the ESS-DIVE API
 4. **TRY Discovery**: Discover TRY datasets, traits, and species lists (CLI-free helpers)
+5. **FRED Discovery**: Discover FRED traits, species, and data sources (CLI-free helpers)
 
 ## Features
 
@@ -29,6 +30,12 @@ Primarily a collection of skills for agentic frameworks (e.g., Claude Code), wit
 - 📋 **Access** the full TRY trait list (HTML → JSON/TSV helpers)
 - 🧬 **Access** the full TRY species list with annotations (TXT → JSON/TSV helpers)
 
+### FRED Database Discovery
+- 🔎 **Search** FRED metadata pages by keyword (no public API)
+- 📋 **Access** FRED trait inventory (HTML → JSON/TSV helpers)
+- 🌿 **Access** FRED species list (HTML → JSON/TSV helpers)
+- 📚 **Access** FRED data sources (best-effort pagination to export all)
+
 
 ## Installation
 
@@ -41,6 +48,7 @@ Use Claude Code's Skills commands to install this repo's marketplace and skills.
 /plugin install essdive-extraction@bioepic-skills
 /plugin install essdive-search@bioepic-skills
 /plugin install try-skills@bioepic-skills
+/plugin install fred-skills@bioepic-skills
 /plugin install ontology-grounding@bioepic-skills
 ```
 
@@ -148,6 +156,20 @@ python skills/try-skills/scripts/try_download_and_search.py --page species --sav
 python skills/try-skills/scripts/try_species_to_json.py TryAccSpecies.txt --format json --output try_species.json
 ```
 
+**FRED Skills (CLI-free helpers):**
+```bash
+# Download and convert FRED trait inventory
+python skills/fred-skills/scripts/fred_download_and_search.py --page traits --save fred_traits.html --insecure
+python skills/fred-skills/scripts/fred_traits_to_json.py fred_traits.html --format tsv --output fred_traits.tsv
+
+# Download and convert FRED species list
+python skills/fred-skills/scripts/fred_download_and_search.py --page species --save fred_species.html --insecure
+python skills/fred-skills/scripts/fred_species_to_json.py fred_species.html --format json --output fred_species.json
+
+# Download and convert FRED data sources (best-effort to fetch all)
+python skills/fred-skills/scripts/fred_data_sources_to_json.py --format json --output fred_sources.json --insecure
+```
+
 ### Python API
 
 Use the library programmatically in your Python code:
@@ -246,6 +268,7 @@ This repository includes agent skills for Claude Code and similar tools. These s
 - `essdive-extraction` for ESS-DIVE metadata/variable extraction and term matching
 - `essdive-search` for ESS-DIVE Dataset API search and dataset fetch (plus CLI-free fallbacks)
 - `try-skills` for TRY dataset discovery, trait list access, and species coverage checks
+- `fred-skills` for FRED traits, species, and data source discovery
 
 See `skills/README.md` for details.
 
