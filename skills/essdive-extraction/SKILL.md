@@ -35,6 +35,7 @@ This command connects to the ESS-DIVE API and retrieves comprehensive metadata f
 - `results.tsv`: Dataset metadata with variables, descriptions, methods
 - `frequencies.tsv`: Frequency counts of variables across all datasets
 - `filetable.tsv`: List of all data files associated with the datasets
+Note: The output directory will be created if it does not exist.
 
 Examples:
 
@@ -85,6 +86,7 @@ The command uses parallel processing to handle large numbers of files efficientl
   - Dataset IDs and names
   - File descriptions
 - `data_dictionaries.tsv`: Compiled data dictionary information from all datasets
+Note: The output directory will be created if it does not exist.
 
 Examples:
 

@@ -124,6 +124,9 @@ bioepic match-terms variable_names.tsv bervo_terms.txt --fuzzy
 Note: If `--output` is omitted for `bioepic match-terms`, the default output path is
 `<terms_file_stem>_matched.tsv` in the same directory as the input terms file.
 
+Note: `bioepic essdive-metadata` and `bioepic essdive-variables` will create the
+output directory if it does not exist.
+
 **TRY Skills (CLI-free helpers):**
 ```bash
 # Download TRY datasets page (use --insecure if certificate checks fail)
