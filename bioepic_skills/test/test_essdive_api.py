@@ -32,11 +32,12 @@ def test_search_essdive_packages_builds_query_and_headers():
         assert qs["isPublic"] == ["true"]
 
         headers = dict(req.header_items())
+        headers_lower = {key.lower(): value for key, value in headers.items()}
         assert headers.get("Authorization") == "Bearer test-token"
-        assert headers.get("Accept") == "application/json"
-        assert headers.get("User-Agent") is not None
-        assert headers.get("Content-Type") == "application/json"
-        assert headers.get("Range") == "bytes=0-1000"
+        assert headers_lower.get("accept") == "application/json"
+        assert headers_lower.get("user-agent") is not None
+        assert headers_lower.get("content-type") == "application/json"
+        assert headers_lower.get("range") == "bytes=0-1000"
 
         return DummyResponse(b'{"ok": true}')
 
