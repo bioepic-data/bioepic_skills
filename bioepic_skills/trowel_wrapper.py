@@ -38,8 +38,7 @@ def get_essdive_metadata(doi_file: str, output_dir: str = ".") -> dict[str, str]
             "See https://docs.ess-dive.lbl.gov/programmatic-tools/ess-dive-dataset-api#get-access"
         )
 
-    if not os.path.exists(output_dir):
-        raise FileNotFoundError(f"Output directory not found: {output_dir}")
+    os.makedirs(output_dir, exist_ok=True)
 
     cmd = ["trowel", "get-essdive-metadata",
            "--path", doi_file, "--outpath", output_dir]
@@ -79,8 +78,7 @@ def get_essdive_variables(
         RuntimeError: If the command fails
         FileNotFoundError: If the filetable doesn't exist
     """
-    if not os.path.exists(output_dir):
-        raise FileNotFoundError(f"Output directory not found: {output_dir}")
+    os.makedirs(output_dir, exist_ok=True)
 
     cmd = ["trowel", "get-essdive-variables", "--outpath",
            output_dir, "--workers", str(workers)]
